@@ -516,8 +516,6 @@ function startTest(){
   const date=document.getElementById("inp-date").value;
   if(!name)return alert("Please select your name.");
   if(!date)return alert("Please enter today's date.");
-  const existing=getSubs().find(s=>s.name===name);
-  if(existing)return alert("A submission already exists for "+name+". Please see your teacher.");
   currentStudent=name; currentDate=date;
   document.getElementById("form-student-name").textContent=name;
   document.getElementById("form-test-date").textContent=date;
