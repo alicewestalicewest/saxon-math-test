@@ -126,21 +126,25 @@ module.exports = async (req, res) => {
     if (action === "updateAnswers") {
       const { data } = req.body;
       const newGraded = gradeData(data);
-      const colMap = [
-        [4, newGraded.total], [5, newGraded.pct + "%"], [6, newGraded.letter],
-        [7, data.q1], [8, data.q2], [9, data.q3], [10, data.q4], [11, data.q5], [12, data.q6],
-        [13, data.q7ax], [14, data.q7ay], [15, data.q7bx], [16, data.q7by], [17, data.q7cx], [18, data.q7cy],
-        [19, data.q8], [20, data.q9],
-        [21, data.q10a], [22, data.q10b], [23, data.q10c], [24, data.q10d],
-        [25, data.q11a], [26, data.q11b], [27, data.q11c], [28, data.q11d],
-        [29, data.q12], [30, data.q13], [31, data.q14], [32, data.q15],
-        [33, data.q16], [34, data.q17], [35, data.q18], [36, data.q19], [37, data.q20],
-        [38, newGraded.factsScore],
-        [39, JSON.stringify(data.facts || {})]
+      // Build a single row from col D (index 4) onwards and write in one call
+      const rowValues = [
+        newGraded.total, newGraded.pct + "%", newGraded.letter,
+        data.q1, data.q2, data.q3, data.q4, data.q5, data.q6,
+        data.q7ax, data.q7ay, data.q7bx, data.q7by, data.q7cx, data.q7cy,
+        data.q8, data.q9,
+        data.q10a, data.q10b, data.q10c, data.q10d,
+        data.q11a, data.q11b, data.q11c, data.q11d,
+        data.q12, data.q13, data.q14, data.q15, data.q16, data.q17, data.q18, data.q19, data.q20,
+        newGraded.factsScore, JSON.stringify(data.facts || {})
       ];
-      for (const [col, val] of colMap) {
-        await updateCell(rowIndex + 1, col, val);
-      }
+      const { sheets, spreadsheetId } = await require("../lib/sheets").getSheet();
+      const sheetRow = rowIndex + 1; // +1 because row 1 = header
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `Responses!D${sheetRow}`,
+        valueInputOption: "RAW",
+        requestBody: { values: [rowValues] }
+      });
       return res.json({ ok: true, graded: newGraded });
     }
 
