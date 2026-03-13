@@ -1,0 +1,64 @@
+// api/submit.js
+const { gradeData } = require("../lib/data");
+const { getRows, appendRow } = require("../lib/sheets");
+
+module.exports = async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  try {
+    const data = req.body;
+
+    // Block duplicate submissions
+    const rows = await getRows();
+    if (rows.length > 1) {
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i][1] === data.name) {
+          return res.status(409).json({ error: "already_submitted" });
+        }
+      }
+    }
+
+    const graded = gradeData(data);
+
+    // Build header row if sheet is empty
+    if (rows.length === 0) {
+      await appendRow([
+        "Timestamp","Name","Date","Score","Percent","Letter",
+        "Q1","Q2","Q3","Q4","Q5","Q6",
+        "Q7ax","Q7ay","Q7bx","Q7by","Q7cx","Q7cy",
+        "Q8","Q9",
+        "Q10a","Q10b","Q10c","Q10d",
+        "Q11a","Q11b","Q11c","Q11d",
+        "Q12","Q13","Q14","Q15","Q16","Q17","Q18","Q19","Q20",
+        "FactsScore","FactsAnswers",
+        "PU_Understand","PU_Plan","PU_Solve","PU_Check",
+        "UnitDeductions",
+        "PsGrade"
+      ]);
+    }
+
+    await appendRow([
+      new Date().toLocaleString(), data.name, data.date,
+      graded.total, graded.pct + "%", graded.letter,
+      data.q1, data.q2, data.q3, data.q4, data.q5, data.q6,
+      data.q7ax, data.q7ay, data.q7bx, data.q7by, data.q7cx, data.q7cy,
+      data.q8, data.q9,
+      data.q10a, data.q10b, data.q10c, data.q10d,
+      data.q11a, data.q11b, data.q11c, data.q11d,
+      data.q12, data.q13, data.q14, data.q15, data.q16, data.q17, data.q18, data.q19, data.q20,
+      graded.factsScore, JSON.stringify(data.facts || {}),
+      data.pu_understand || "", data.pu_plan || "", data.pu_solve || "", data.pu_check || "",
+      0,  // UnitDeductions — teacher fills in via dashboard
+      ""  // PsGrade — teacher fills in via dashboard
+    ]);
+
+    return res.json(graded);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
+  }
+};

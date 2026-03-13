@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Saxon Math Test 16A</title>
+<style>
+  :root { --blue:#2563eb; --blue-dark:#1d4ed8; --green:#16a34a; --red:#dc2626; --gray:#6b7280; --bg:#f8fafc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:var(--bg); color:#1e293b; }
+  header { background:var(--blue); color:#fff; padding:16px 24px; display:flex; align-items:center; gap:12px; }
+  header h1 { font-size:1.3rem; }
+  .container { max-width:860px; margin:0 auto; padding:24px 16px; }
+  .card { background:#fff; border-radius:12px; box-shadow:0 1px 6px #0001; padding:24px; margin-bottom:20px; }
+  label { display:block; font-weight:600; margin-bottom:4px; font-size:.93rem; }
+  input, select, textarea { width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:7px; font-size:.97rem; transition:border .2s; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--blue); }
+  .btn { padding:10px 22px; border:none; border-radius:8px; font-size:.97rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .btn-primary { background:var(--blue); color:#fff; } .btn-primary:hover { background:var(--blue-dark); }
+  .btn-green { background:var(--green); color:#fff; }
+  .btn-red { background:var(--red); color:#fff; }
+  .btn-gray { background:#e5e7eb; color:#374151; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .section-title { font-size:1.08rem; font-weight:700; color:var(--blue); margin-bottom:14px; padding-bottom:6px; border-bottom:2px solid #e2e8f0; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  @media(max-width:560px){ .grid2{grid-template-columns:1fr;} .grid4{grid-template-columns:1fr 1fr;} }
+  .q-group { margin-bottom:18px; }
+  .q-label { font-weight:700; font-size:.92rem; color:#374151; margin-bottom:6px; display:block; }
+  .q-hint { font-size:.82rem; color:var(--gray); margin-top:3px; display:block; }
+  .result-box { padding:18px; border-radius:10px; text-align:center; margin-bottom:0; }
+  .result-box.pass { background:#dcfce7; border:2px solid #86efac; }
+  .result-box.fail { background:#fee2e2; border:2px solid #fca5a5; }
+  .score-big { font-size:2.2rem; font-weight:800; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:20px; font-size:.8rem; font-weight:600; }
+  .pill-green { background:#dcfce7; color:var(--green); }
+  .pill-red { background:#fee2e2; color:var(--red); }
+  .review-item { padding:10px 14px; border-radius:8px; margin-bottom:8px; border-left:4px solid; }
+  .review-item.correct { border-color:var(--green); background:#f0fdf4; }
+  .review-item.wrong { border-color:var(--red); background:#fff1f2; }
+  .modal-bg { display:none; position:fixed; inset:0; background:#0006; z-index:100; align-items:center; justify-content:center; }
+  .modal-bg.open { display:flex; }
+  .modal { background:#fff; border-radius:14px; padding:28px; max-width:720px; width:96%; max-height:90vh; overflow-y:auto; }
+  .facts-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  @media(max-width:440px){.facts-grid{grid-template-columns:1fr 1fr;}}
+  pre { white-space:pre-wrap; font-family:inherit; font-size:.85rem; }
+  .spinner { display:inline-block; width:18px; height:18px; border:3px solid #fff4; border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:6px; }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* Q7 coord inputs */
+  .coord-row { display:flex; align-items:center; gap:6px; margin-top:8px; }
+  .coord-label { font-weight:700; color:#2563eb; font-size:.95rem; min-width:32px; }
+  .coord-paren { font-size:1.6rem; color:#374151; font-weight:200; line-height:1; padding:0 2px; }
+  .coord-input { width:64px !important; text-align:center; padding:7px 4px !important; }
+  .coord-comma { font-size:1.1rem; font-weight:700; color:#374151; margin:0 2px; }
+  /* Teacher answer grid */
+  .ans-grid { width:100%; border-collapse:collapse; font-size:.78rem; margin-top:6px; }
+  .ans-grid th { background:#f1f5f9; padding:4px 6px; border:1px solid #e2e8f0; text-align:center; white-space:nowrap; }
+  .ans-grid td { padding:4px 6px; border:1px solid #e2e8f0; text-align:center; vertical-align:top; min-width:44px; }
+  .ans-ok { background:#f0fdf4; }
+  .ans-wrong { background:#fff1f2; }
+  .ans-student { font-weight:700; font-size:.82rem; }
+  .ans-key { font-size:.72rem; color:var(--green); margin-top:2px; }
+  .deduct-input { width:68px !important; padding:4px 6px !important; font-size:.88rem; text-align:center; }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+  <h1>Saxon Math Course 2 — Cumulative Test 16A</h1>
+</header>
+
+<div class="container">
+
+<!-- START -->
+<div id="page-start">
+  <div class="card">
+    <div class="section-title">Welcome</div>
+    <p style="margin-bottom:18px;color:#475569;">Select your name and today's date to begin the test. Your answers will be submitted and graded automatically.</p>
+    <div class="grid2" style="margin-bottom:16px;">
+      <div>
+        <label for="sel-name">Student Name</label>
+        <select id="sel-name"><option value="">-- Select your name --</option></select>
+      </div>
+      <div>
+        <label for="inp-date">Date</label>
+        <input type="date" id="inp-date"/>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="startTest()">Begin Test →</button>
+    <button class="btn btn-gray" style="margin-left:10px;" onclick="showTeacherLogin()">Teacher Login</button>
+  </div>
+</div>
+
+<!-- FORM -->
+<div id="page-form" style="display:none;">
+  <div class="card" style="padding:14px 24px;background:#eff6ff;border:1.5px solid #bfdbfe;">
+    <span style="font-size:.88rem;color:#1e40af;font-weight:600;">📝 Student:</span>
+    <span id="form-student-name" style="font-size:1rem;font-weight:800;color:#1d4ed8;margin-left:6px;"></span>
+    <span style="font-size:.82rem;color:#64748b;margin-left:12px;" id="form-test-date"></span>
+  </div>
+  <div class="card"><div id="questions-1-9"></div></div>
+  <div class="card"><div id="questions-10-11"></div></div>
+  <div class="card"><div id="questions-12-20"></div></div>
+  <div class="card">
+    <div class="section-title">⚡ POWER UP: Integer Facts</div>
+    <p class="q-hint" style="margin-bottom:14px;">Simplify each expression. Enter just the number (e.g. <strong>-10</strong>).</p>
+    <div class="facts-grid" id="facts-grid"></div>
+  </div>
+  <div class="card">
+    <div class="section-title">📝 POWER UP: Problem Solving</div>
+    <p style="font-weight:600;margin-bottom:12px;color:#374151;">How many cubic yards of concrete must be ordered to pour the section below? (18 ft long, 1 ft wide, 1.5 ft deep)</p>
+    <div class="grid2">
+      <div class="q-group">
+        <label class="q-label">Understand</label>
+        <span class="q-hint" style="margin-bottom:4px;">What information am I given? What am I asked to find or do?</span>
+        <textarea id="pu_understand" rows="3" placeholder="Write your answer here..."></textarea>
+      </div>
+      <div class="q-group">
+        <label class="q-label">Plan</label>
+        <span class="q-hint" style="margin-bottom:4px;">How can I use the information I am given? Which strategy should I try?</span>
+        <textarea id="pu_plan" rows="3" placeholder="Write your answer here..."></textarea>
+      </div>
+      <div class="q-group">
+        <label class="q-label">Solve</label>
+        <span class="q-hint" style="margin-bottom:4px;">Did I follow the plan? Did I show my work? Did I write the answer?</span>
+        <textarea id="pu_solve" rows="3" placeholder="Write your answer here..."></textarea>
+      </div>
+      <div class="q-group">
+        <label class="q-label">Check</label>
+        <span class="q-hint" style="margin-bottom:4px;">Did I use the correct information? Did I do what was asked? Is my answer reasonable?</span>
+        <textarea id="pu_check" rows="3" placeholder="Write your answer here..."></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="text-align:center;">
+    <p style="margin-bottom:14px;color:#475569;">Review your answers before submitting. You can only submit once.</p>
+    <button class="btn btn-primary" id="submit-btn" onclick="submitTest()">Submit Test</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="page-result" style="display:none;">
+  <div class="card" id="result-summary"></div>
+  <div class="card" id="result-detail"></div>
+</div>
+
+<!-- TEACHER -->
+<div id="page-teacher" style="display:none;">
+  <div class="card">
+    <div class="section-title">🔐 Teacher Dashboard</div>
+    <div id="teacher-login-form">
+      <label>Password</label>
+      <input type="password" id="teacher-pw" placeholder="Enter teacher password"
+             style="max-width:280px;display:inline-block;margin-right:10px;"
+             onkeydown="if(event.key==='Enter')teacherLogin()"/>
+      <button class="btn btn-primary" onclick="teacherLogin()">Login</button>
+      <button class="btn btn-gray" style="margin-left:8px;" onclick="showPage('page-start')">Cancel</button>
+    </div>
+    <div id="teacher-content" style="display:none;">
+      <div id="teacher-table"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- Modal (answers + email) -->
+<div class="modal-bg" id="the-modal">
+  <div class="modal">
+    <div id="modal-content"></div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-green" id="modal-action-btn" style="display:none;"></button>
+      <button class="btn btn-gray" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const ROSTER_NAMES = [
+  "Aarohi Agrawal","Alisha Agrawal","Ananya Arvind","Elizabeth Cai","Eloisa Keojampa",
+  "Eric Huang","Erin Yuen","Evan Chang","Jennifer Chen","Jenny Montgomery",
+  "Jooha Park","Leo Matsiev","Nathan Streeter","Peyton Pereira","Rynshall Chen",
+  "Samiha Java","Tate Yeung","Thea Angelidis-Smith","Vassilis Papadimitriou","Isabelle Yan",
+  "Ethan Jiang","Aarush Gupta","Aria Pan","Kaya Tobiczyk","Claire You",
+  "Lisa Zhang","Ashra Vaka","Erik Xu","Alisha Jain","Catherine Wang",
+  "Rita Liang","Vikram Vemoory","Neha Murthy","Oliver Liu","Becca Zhang",
+  "Francis Wang","Xinyan Shen","Xinkai Shen","William Lu","Elvin Qin"
+];
+const ANSWER_KEY = {
+  q1:["6.70","6.7"], q2:["6"], q3:["b"], q4:["15"], q5:["960"], q6:["47"],
+  q7ax:["-5"], q7ay:["1"],
+  q7bx:["-1"], q7by:["1"],
+  q7cx:["-3"], q7cy:["3"],
+  q8:["b"], q9:["56"],
+  q10a:["-80"], q10b:["1.2","1.20"], q10c:["-300"], q10d:["-1/6","-0.1667"],
+  q11a:["0.8333","0.833","0.83"],
+  q11b:["83.333%","83.33%","83.3%","83%","83.333","83.33","83.3"],
+  q11c:["3/5"], q11d:["60%","60"],
+  q12:["36"], q13:["1350"], q14:["75"], q15:["80"], q16:["1.58"],
+  q17:["4/75","0.0533"], q18:["5"], q19:["10/3","3 1/3"], q20:["5.1"]
+};
+
+// q7: 6 sub-keys share 5 pts total
+const POINTS = {
+  q1:5, q2:5, q3:5, q4:5, q5:5, q6:5,
+  q7ax:0.84, q7ay:0.83, q7bx:0.84, q7by:0.83, q7cx:0.83, q7cy:0.83,
+  q8:5, q9:5,
+  q10a:1.25, q10b:1.25, q10c:1.25, q10d:1.25,
+  q11a:1.25, q11b:1.25, q11c:1.25, q11d:1.25,
+  q12:5, q13:5, q14:5, q15:5, q16:5, q17:5, q18:5, q19:5, q20:5
+};
+
+const ALL_KEYS = [
+  "q1","q2","q3","q4","q5","q6",
+  "q7ax","q7ay","q7bx","q7by","q7cx","q7cy",
+  "q8","q9",
+  "q10a","q10b","q10c","q10d",
+  "q11a","q11b","q11c","q11d",
+  "q12","q13","q14","q15","q16","q17","q18","q19","q20"
+];
+
+const SOLUTIONS = {
+  q1:"Tim mowed: 2x$7.50=$15.00 | Washed: 4x$6.30=$25.20 | Total: $40.20/6 = $6.70/hr",
+  q2:"x+(x2-xy)-y = 5+(25-20)-4 = 6",
+  q3:"All sides equal, all angles 60 degrees -> B",
+  q4:"Ratio 3:4, parts=7 | 35/7=5 per part -> Clean=3x5=15",
+  q5:"Rate=400/25=16/min -> 60x16=960",
+  q6:"C=pi x d=3.14x15=47.1 -> 47 m",
+  q7:"Subtract 6 from each x-coordinate: A(1,1)->A'(-5,1), B(5,1)->B'(-1,1), C(3,3)->C'(-3,3)",
+  q8:"x>-5: open circle at -5, shaded right -> B",
+  q9:"(1/4)h=14 -> h=56 inches",
+  q10a:"400/(-5) = -80", q10b:"-7.2/(-6) = 1.2", q10c:"15x(-20) = -300", q10d:"(1/2)(-1/3) = -1/6",
+  q11a:"5/6 = 0.8333...", q11b:"0.8333 x 100 = 83.33...%", q11c:"0.6=6/10=3/5", q11d:"3/5 x 100=60%",
+  q12:"Area=((5+7)x6)/2=36 m2", q13:"600=(4/9)n -> n=1350", q14:"(n/100)x40=30 -> n=75%",
+  q15:"(3/5)m=48 -> m=80", q16:"1.5=x-0.08 -> x=1.58", q17:"5 1/3 / 100=(16/3)/100=4/75",
+  q18:"27+10-12/sqrt(25)=27+10-12/5=25/5=5", q19:"(14/3)/(7/5)=10/3", q20:"-2.6+4.2+3.5=5.1"
+};
+
+const FACTS_ANSWERS = {
+  f1:"-10",f2:"-6",f3:"16",f4:"4",
+  f5:"-6",f6:"-12",f7:"-27",f8:"-3",
+  f9:"10",f10:"14",f11:"-24",f12:"-6",
+  f13:"-9",f14:"1",f15:"-24",f16:"-6"
+};
+
+const FACTS_PROBLEMS = [
+  {k:"f1", text:"(−8) + (−2) ="},{k:"f2", text:"(−8) − (−2) ="},
+  {k:"f3", text:"(−8)(−2) ="},   {k:"f4", text:"−8 ÷ −2 ="},
+  {k:"f5", text:"(−9) + (+3) ="},{k:"f6", text:"(−9) − (+3) ="},
+  {k:"f7", text:"(−9)(+3) ="},   {k:"f8", text:"−9 ÷ +3 ="},
+  {k:"f9", text:"12 + (−2) ="},  {k:"f10",text:"12 − (−2) ="},
+  {k:"f11",text:"(12)(−2) ="},   {k:"f12",text:"12 ÷ −2 ="},
+  {k:"f13",text:"(−4)+(−3)+(−2) ="},{k:"f14",text:"(−4)−(−3)−(−2) ="},
+  {k:"f15",text:"(−4)(−3)(−2) ="},{k:"f16",text:"(−4)(−3)÷(−2) ="}
+];
+
+// For teacher answer grid column labels
+const GRID_COLS = [
+  {k:"q1",l:"Q1"},{k:"q2",l:"Q2"},{k:"q3",l:"Q3"},{k:"q4",l:"Q4"},{k:"q5",l:"Q5"},{k:"q6",l:"Q6"},
+  {k:"q7ax",l:"Q7 A'x"},{k:"q7ay",l:"Q7 A'y"},
+  {k:"q7bx",l:"Q7 B'x"},{k:"q7by",l:"Q7 B'y"},
+  {k:"q7cx",l:"Q7 C'x"},{k:"q7cy",l:"Q7 C'y"},
+  {k:"q8",l:"Q8"},{k:"q9",l:"Q9"},
+  {k:"q10a",l:"10a"},{k:"q10b",l:"10b"},{k:"q10c",l:"10c"},{k:"q10d",l:"10d"},
+  {k:"q11a",l:"11a"},{k:"q11b",l:"11b"},{k:"q11c",l:"11c"},{k:"q11d",l:"11d"},
+  {k:"q12",l:"Q12"},{k:"q13",l:"Q13"},{k:"q14",l:"Q14"},{k:"q15",l:"Q15"},
+  {k:"q16",l:"Q16"},{k:"q17",l:"Q17"},{k:"q18",l:"Q18"},{k:"q19",l:"Q19"},{k:"q20",l:"Q20"}
+];
+
+// ============================================================
+// GRADING
+// ============================================================
+function norm(s){
+  return String(s||"").toLowerCase().replace(/\s+/g,"").replace(/,/g,"");
+}
+
+function gradeData(data){
+  const results={};
+  let total=0;
+  for(const k of ALL_KEYS){
+    const raw=String(data[k]||"").trim();
+    const ans=norm(raw);
+    let correct=false;
+    for(const a of (ANSWER_KEY[k]||[]).map(norm)){
+      if(ans!==""&&ans===a){correct=true;break;}
+    }
+    const earned=correct?POINTS[k]:0;
+    results[k]={correct,earned,answer:raw};
+    total+=earned;
+  }
+  // Facts
+  let factsCorrect=0;
+  const factsResults={};
+  const fd=data.facts||{};
+  for(const fk of Object.keys(FACTS_ANSWERS)){
+    const raw=String(fd[fk]||"").trim();
+    const correct=(raw===FACTS_ANSWERS[fk]);
+    factsResults[fk]={correct,answer:raw,expected:FACTS_ANSWERS[fk]};
+    if(correct)factsCorrect++;
+  }
+  const factsScore=Math.round((factsCorrect/16)*5*100)/100;
+  total=Math.round(total*100)/100;
+  const pct=Math.round((total/100)*100);
+  const letter=pct>=90?"A":pct>=80?"B":pct>=70?"C":pct>=60?"D":"F";
+  return{total,pct,letter,results,factsScore,factsCorrect,factsResults,
+    pu_understand:data.pu_understand||"",pu_plan:data.pu_plan||"",
+    pu_solve:data.pu_solve||"",pu_check:data.pu_check||""};
+}
+
+// ============================================================
+// QUESTION DEFINITIONS
+// ============================================================
+const Q1_9=[
+  {k:"q1", label:"Q1", text:"Tim mowed lawns for 2 hours and earned $7.50 per hour. Then he washed windows for 4 hours and earned $6.30 per hour. What were Tim's average earnings per hour for all 6 hours?", hint:"Number only — write units on your paper"},
+  {k:"q2", label:"Q2", text:"Evaluate: x + (x² − xy) − y, where x = 5, y = 4"},
+  {k:"q3", label:"Q3", text:"Sketch an equilateral triangle. An equilateral triangle:",
+   mc:["a. has 2 equal sides","b. has 3 equal sides","c. has no equal sides, all sides are of a different length"]},
+  {k:"q4", label:"Q4", text:"When Nasim cleaned his room he found that the ratio of clean clothes to dirty clothes was 3 to 4. If 35 articles of clothing were discovered, how many were clean?", hint:"Number only — write units on your paper"},
+  {k:"q5", label:"Q5", text:"In 25 minutes, 400 customers entered the attraction. At this rate, how many customers would enter the attraction in 1 hour?", hint:"Number only — write units on your paper"},
+  {k:"q6", label:"Q6", text:"The diameter of a round skating rink is 15 m. Find the circumference of the rink to the nearest meter.", hint:"Number only — write units on your paper"},
+  {k:"q7", label:"Q7", text:"The vertices of △ABC are A(1,1), B(5,1), and C(3,3). Draw △ABC and its image △A′B′C′ translated 6 units to the left. Enter the numbers only for each vertex:", coords:true},
+  {k:"q8", label:"Q8", text:"Graph x > −5 on a number line.", mc_nl:true},
+  {k:"q9", label:"Q9", text:"Natasha found that the 14 inches from her knee joint to her hip joint was ¼ of her total height. What was Natasha's total height?", hint:"Number only — write units on your paper"},
+];
+
+const Q10_PARTS=[
+  {k:"q10a",sub:"a",text:"400 ÷ (−5)"},
+  {k:"q10b",sub:"b",text:"−7.2 ÷ (−6)"},
+  {k:"q10c",sub:"c",text:"15 × (−20)"},
+  {k:"q10d",sub:"d",text:"(1/2)(−1/3)"},
+];
+const Q11_PARTS=[
+  {k:"q11a",sub:"a",text:"5/6 as a decimal",    hint:"If the decimal repeats, write the repeating digit twice (e.g. 70.22)"},
+  {k:"q11b",sub:"b",text:"5/6 as a percent",     hint:"If the decimal repeats, write the repeating digit twice (e.g. 70.22%)"},
+  {k:"q11c",sub:"c",text:"0.6 as a fraction (simplest form)"},
+  {k:"q11d",sub:"d",text:"0.6 as a percent"},
+];
+const Q12_20=[
+  {k:"q12",label:"Q12",text:"Find the area of this trapezoid. (bases: 5 m and 7 m, height: 6 m)", hint:"Number only — write units on your paper"},
+  {k:"q13",label:"Q13",text:"Six hundred is 4/9 of what number?"},
+  {k:"q14",label:"Q14",text:"What percent of 40 is 30?", hint:"Number only — write units on your paper"},
+  {k:"q15",label:"Q15",text:"3/5 m = 48. Solve for m."},
+  {k:"q16",label:"Q16",text:"1.5 = x − 0.08. Solve for x."},
+  {k:"q17",label:"Q17",text:"5 1/3 %"},
+  {k:"q18",label:"Q18",text:"3³ + 2 · 5 − 3 · 2²  ÷  √(3² + 4²)"},
+  {k:"q19",label:"Q19",text:"4 2/3 ÷ 1.4", hint:"Express as a fraction or mixed number"},
+  {k:"q20",label:"Q20",text:"−2.6 − (−4.2) + (+3.5)"},
+];
+
+// ============================================================
+// NUMBER LINE
+// ============================================================
+function drawNL(opts){
+  const W=320,H=54,pad=18,nums=[-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7];
+  const x=n=>pad+((n+7)/14)*(W-pad*2);
+  let s=`<svg width="${W}" height="${H}" style="display:block;overflow:visible;">`;
+  s+=`<line x1="${pad-10}" y1="32" x2="${W-pad+10}" y2="32" stroke="#1e293b" stroke-width="2"/>`;
+  s+=`<polygon points="${W-pad+10},32 ${W-pad+4},28 ${W-pad+4},36" fill="#1e293b"/>`;
+  s+=`<polygon points="${pad-10},32 ${pad-4},28 ${pad-4},36" fill="#1e293b"/>`;
+  nums.forEach(n=>{const cx=x(n);
+    s+=`<line x1="${cx}" y1="26" x2="${cx}" y2="38" stroke="#1e293b" stroke-width="1.5"/>`;
+    s+=`<text x="${cx}" y="52" text-anchor="middle" font-size="10" fill="#374151">${n}</text>`;
+  });
+  if(opts.rightShade){const cx=x(opts.dot);s+=`<rect x="${cx}" y="28" width="${W-pad+10-cx}" height="8" fill="#2563eb" opacity="0.25"/>`;}
+  if(opts.leftShade){const cx=x(opts.dot);s+=`<rect x="${pad-10}" y="28" width="${cx-(pad-10)}" height="8" fill="#2563eb" opacity="0.25"/>`;}
+  if(opts.dot!==undefined){const cx=x(opts.dot);
+    s+=opts.open?`<circle cx="${cx}" cy="32" r="6" fill="white" stroke="#2563eb" stroke-width="2.5"/>`:
+                 `<circle cx="${cx}" cy="32" r="6" fill="#2563eb"/>`;
+  }
+  return s+`</svg>`;
+}
+const NL_OPTS=[
+  {label:"a",dot:-5,open:true, rightShade:false,leftShade:true},
+  {label:"b",dot:-5,open:true, rightShade:true, leftShade:false},
+  {label:"c",dot:-5,open:false,rightShade:true, leftShade:false},
+  {label:"d",dot:-5,open:false,rightShade:false,leftShade:true},
+];
+
+// ============================================================
+// BUILD FORM
+// ============================================================
+function buildForm(){
+  // Facts
+  document.getElementById("facts-grid").innerHTML=FACTS_PROBLEMS.map(f=>
+    `<div class="q-group">
+      <label class="q-label" style="font-size:.85rem;">${f.text}</label>
+      <input type="text" id="${f.k}" placeholder="answer" autocomplete="off"/>
+    </div>`
+  ).join("");
+
+  // Q1-9
+  document.getElementById("questions-1-9").innerHTML=Q1_9.map(q=>{
+    if(q.coords) return `<div class="q-group">
+      <label class="q-label">${q.label}. ${q.text}</label>
+      <div style="margin-top:10px;">
+        <div class="coord-row">
+          <span class="coord-label">A′</span>
+          <span class="coord-paren">(</span>
+          <input type="text" id="q7ax" class="coord-input" placeholder="x" autocomplete="off"/>
+          <span class="coord-comma">,</span>
+          <input type="text" id="q7ay" class="coord-input" placeholder="y" autocomplete="off"/>
+          <span class="coord-paren">)</span>
+        </div>
+        <div class="coord-row">
+          <span class="coord-label">B′</span>
+          <span class="coord-paren">(</span>
+          <input type="text" id="q7bx" class="coord-input" placeholder="x" autocomplete="off"/>
+          <span class="coord-comma">,</span>
+          <input type="text" id="q7by" class="coord-input" placeholder="y" autocomplete="off"/>
+          <span class="coord-paren">)</span>
+        </div>
+        <div class="coord-row">
+          <span class="coord-label">C′</span>
+          <span class="coord-paren">(</span>
+          <input type="text" id="q7cx" class="coord-input" placeholder="x" autocomplete="off"/>
+          <span class="coord-comma">,</span>
+          <input type="text" id="q7cy" class="coord-input" placeholder="y" autocomplete="off"/>
+          <span class="coord-paren">)</span>
+        </div>
+      </div>
+      <span class="q-hint">Enter numbers only — parentheses are already printed</span>
+    </div>`;
+
+    if(q.mc) return `<div class="q-group">
+      <label class="q-label">${q.label}. ${q.text}</label>
+      <div style="margin-top:6px;">
+        ${q.mc.map(opt=>{
+          const val=opt.split(".")[0].trim();
+          return `<label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;">
+            <input type="radio" name="${q.k}" value="${val}" style="width:auto;margin-right:8px;"/>
+            ${opt}</label>`;
+        }).join("")}
+      </div>
+      <input type="hidden" id="${q.k}" value=""/>
+    </div>`;
+
+    if(q.mc_nl) return `<div class="q-group">
+      <label class="q-label">${q.label}. ${q.text}</label>
+      <div style="margin-top:10px;">
+        ${NL_OPTS.map(opt=>`
+          <label style="display:flex;align-items:center;gap:12px;margin-bottom:14px;cursor:pointer;padding:8px;border-radius:8px;border:1.5px solid #e2e8f0;" class="nl-opt">
+            <input type="radio" name="${q.k}" value="${opt.label}" style="width:auto;flex-shrink:0;"/>
+            <span style="font-weight:600;min-width:16px;">${opt.label}.</span>
+            ${drawNL(opt)}
+          </label>`).join("")}
+      </div>
+      <input type="hidden" id="${q.k}" value=""/>
+    </div>`;
+
+    return `<div class="q-group">
+      <label class="q-label">${q.label}. ${q.text}</label>
+      <input type="text" id="${q.k}" placeholder="Your answer" autocomplete="off"/>
+      ${q.hint?`<span class="q-hint">${q.hint}</span>`:""}
+    </div>`;
+  }).join("");
+
+  // Wire radios
+  Q1_9.filter(q=>q.mc||q.mc_nl).forEach(q=>{
+    document.querySelectorAll(`input[name="${q.k}"]`).forEach(r=>{
+      r.addEventListener("change",()=>{
+        document.getElementById(q.k).value=r.value;
+        document.querySelectorAll(`input[name="${q.k}"]`).forEach(rb=>{
+          const lb=rb.closest("label");
+          if(lb&&lb.classList.contains("nl-opt")){
+            lb.style.borderColor=rb.checked?"#2563eb":"#e2e8f0";
+            lb.style.background=rb.checked?"#eff6ff":"";
+          }
+        });
+      });
+    });
+  });
+
+  // Q10 & Q11
+  document.getElementById("questions-10-11").innerHTML=
+    `<p style="font-weight:700;margin-bottom:10px;color:#374151;">Q10. Simplify:</p>
+    <div class="grid4" style="margin-bottom:20px;">`+
+    Q10_PARTS.map(p=>`<div class="q-group">
+      <label class="q-label">${p.sub}) ${p.text}</label>
+      <input type="text" id="${p.k}" placeholder="answer" autocomplete="off"/>
+    </div>`).join("")+
+    `</div>
+    <p style="font-weight:700;margin-bottom:10px;color:#374151;">Q11. Complete this table:</p>
+    <div class="grid2">`+
+    Q11_PARTS.map(p=>`<div class="q-group">
+      <label class="q-label">${p.sub}) ${p.text}</label>
+      <input type="text" id="${p.k}" placeholder="answer" autocomplete="off"/>
+      ${p.hint?`<span class="q-hint">${p.hint}</span>`:""}
+    </div>`).join("")+`</div>`;
+
+  // Q12-20
+  document.getElementById("questions-12-20").innerHTML=Q12_20.map(q=>
+    `<div class="q-group">
+      <label class="q-label">${q.label}. ${q.text}</label>
+      <input type="text" id="${q.k}" placeholder="Your answer" autocomplete="off"/>
+      ${q.hint?`<span class="q-hint">${q.hint}</span>`:""}
+    </div>`
+  ).join("");
+}
+
+// ============================================================
+// NAVIGATION & STATE
+// ============================================================
+let currentStudent="", currentDate="";
+
+function showPage(id){
+  ["page-start","page-form","page-result","page-teacher"].forEach(p=>{
+    document.getElementById(p).style.display=(p===id)?"block":"none";
+  });
+}
+function startTest(){
+  const name=document.getElementById("sel-name").value;
+  const date=document.getElementById("inp-date").value;
+  if(!name)return alert("Please select your name.");
+  if(!date)return alert("Please enter today's date.");
+  const existing=getSubs().find(s=>s.name===name);
+  if(existing)return alert("A submission already exists for "+name+". Please see your teacher.");
+  currentStudent=name; currentDate=date;
+  document.getElementById("form-student-name").textContent=name;
+  document.getElementById("form-test-date").textContent=date;
+  showPage("page-form"); window.scrollTo(0,0);
+}
+function showTeacherLogin(){
+  showPage("page-teacher");
+  document.getElementById("teacher-login-form").style.display="block";
+  document.getElementById("teacher-content").style.display="none";
+}
+
+// ============================================================
+// SUBMIT
+// ============================================================
+async function submitTest(){
+  if(!confirm("Are you sure you want to submit? You can only submit once."))return;
+  const btn=document.getElementById("submit-btn");
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Submitting…';
+
+  const facts={};
+  FACTS_PROBLEMS.forEach(f=>{
+    const el=document.getElementById(f.k);
+    facts[f.k]=el?el.value.trim():"";
+  });
+
+  const inputKeys=["q1","q2","q3","q4","q5","q6",
+    "q7ax","q7ay","q7bx","q7by","q7cx","q7cy",
+    "q8","q9","q10a","q10b","q10c","q10d",
+    "q11a","q11b","q11c","q11d",
+    "q12","q13","q14","q15","q16","q17","q18","q19","q20"];
+
+  const data={name:currentStudent,date:currentDate,facts,
+    pu_understand:document.getElementById("pu_understand").value,
+    pu_plan:document.getElementById("pu_plan").value,
+    pu_solve:document.getElementById("pu_solve").value,
+    pu_check:document.getElementById("pu_check").value};
+  inputKeys.forEach(k=>{const el=document.getElementById(k);data[k]=el?el.value.trim():"";});
+
+  try {
+    const r=await fetch("/api/submit",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(data)
+    });
+    const result=await r.json();
+    if(result.error==="already_submitted"){
+      alert("A submission already exists for "+currentStudent+". Please see your teacher.");
+      btn.disabled=false; btn.textContent="Submit Test";
+      return;
+    }
+    if(result.error) throw new Error(result.error);
+    showResults(result);
+  } catch(e){
+    alert("Error submitting: "+e.message);
+    btn.disabled=false; btn.textContent="Submit Test";
+  }
+}
+
+// ============================================================
+// RESULTS PAGE
+// ============================================================
+function showResults(g){
+  showPage("page-result"); window.scrollTo(0,0);
+
+  document.getElementById("result-summary").innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">
+      <div class="result-box ${g.pct>=70?'pass':'fail'}">
+        <div style="font-size:.82rem;font-weight:600;color:#475569;margin-bottom:6px;">TEST QUESTIONS  Q1–Q20</div>
+        <div class="score-big">${g.total} / 100</div>
+        <div style="font-size:.95rem;font-weight:600;margin-top:4px;">${g.pct}%  ·  ${g.letter}</div>
+      </div>
+      <div class="result-box" style="background:#eff6ff;border:2px solid #bfdbfe;">
+        <div style="font-size:.82rem;font-weight:600;color:#475569;margin-bottom:6px;">POWER UP  / 10</div>
+        <div class="score-big">${g.factsScore}<span style="font-size:1.2rem;color:#94a3b8;"> + </span><span style="font-size:1.6rem;color:#94a3b8;">__</span><span style="font-size:1rem;"> / 10</span></div>
+        <div style="font-size:.78rem;color:#475569;margin-top:4px;">Facts ${g.factsScore}/5 (${g.factsCorrect}/16) · Problem Solving __/5 teacher graded</div>
+      </div>
+    </div>
+    <div style="color:#6b7280;font-size:.88rem;">${currentStudent} &nbsp;|&nbsp; ${currentDate}</div>`;
+
+  // Q review
+  const Q7_KEYS=["q7ax","q7ay","q7bx","q7by","q7cx","q7cy"];
+  let html=`<div class="section-title">Question Review</div>`;
+  let q7Done=false;
+
+  for(const k of ALL_KEYS){
+    if(Q7_KEYS.includes(k)){
+      if(!q7Done){
+        q7Done=true;
+        const earned=Q7_KEYS.reduce((s,c)=>s+(g.results[c].correct?POINTS[c]:0),0);
+        const allOk=Q7_KEYS.every(c=>g.results[c].correct);
+        const pts=Math.round(earned*100)/100;
+        html+=`<div class="review-item ${allOk?'correct':'wrong'}">
+          <strong>Q7</strong> <span class="pill ${allOk?'pill-green':'pill-red'}">${allOk?'✓':'✗'} ${pts}/5 pts</span>
+          <div style="margin-top:6px;font-size:.88rem;line-height:1.8;">
+            A′ ( <strong>${g.results.q7ax.answer||'?'}</strong> , <strong>${g.results.q7ay.answer||'?'}</strong> )
+            ${(g.results.q7ax.correct&&g.results.q7ay.correct)?'✓':'<span style="color:var(--red);">✗ correct: (−5, 1)</span>'}
+            &nbsp;&nbsp;
+            B′ ( <strong>${g.results.q7bx.answer||'?'}</strong> , <strong>${g.results.q7by.answer||'?'}</strong> )
+            ${(g.results.q7bx.correct&&g.results.q7by.correct)?'✓':'<span style="color:var(--red);">✗ correct: (−1, 1)</span>'}
+            &nbsp;&nbsp;
+            C′ ( <strong>${g.results.q7cx.answer||'?'}</strong> , <strong>${g.results.q7cy.answer||'?'}</strong> )
+            ${(g.results.q7cx.correct&&g.results.q7cy.correct)?'✓':'<span style="color:var(--red);">✗ correct: (−3, 3)</span>'}
+          </div>
+        </div>`;
+      }
+      continue;
+    }
+    const r=g.results[k];
+    html+=`<div class="review-item ${r.correct?'correct':'wrong'}">
+      <strong>${k.toUpperCase()}</strong>: <em>${r.answer||'(blank)'}</em>
+      ${r.correct
+        ?`<span class="pill pill-green">✓ +${r.earned} pts</span>`
+        :`<span class="pill pill-red">✗ 0 pts</span> <span style="font-size:.82rem;color:#6b7280;margin-left:6px;">✔ ${(ANSWER_KEY[k]||[""])[0]}</span>`}
+    </div>`;
+  }
+
+  // Facts table
+  html+=`<div class="section-title" style="margin-top:24px;">⚡ Power-Up Facts — ${g.factsScore}/5 pts (${g.factsCorrect}/16 correct)</div>
+  <table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+    <thead><tr style="background:#f1f5f9;">
+      <th style="padding:7px;text-align:center;border:1px solid #e2e8f0;">#</th>
+      <th style="padding:7px;text-align:left;border:1px solid #e2e8f0;">Problem</th>
+      <th style="padding:7px;text-align:center;border:1px solid #e2e8f0;">Your Answer</th>
+      <th style="padding:7px;text-align:center;border:1px solid #e2e8f0;">Correct</th>
+      <th style="padding:7px;text-align:center;border:1px solid #e2e8f0;">✓/✗</th>
+    </tr></thead><tbody>`;
+  FACTS_PROBLEMS.forEach((f,i)=>{
+    const fr=g.factsResults[f.k];
+    if(!fr)return;
+    html+=`<tr style="background:${fr.correct?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:7px;text-align:center;border:1px solid #e2e8f0;color:#6b7280;font-weight:700;">${i+1}</td>
+      <td style="padding:7px;border:1px solid #e2e8f0;font-weight:600;">${f.text}</td>
+      <td style="padding:7px;text-align:center;border:1px solid #e2e8f0;">${fr.answer||'(blank)'}</td>
+      <td style="padding:7px;text-align:center;border:1px solid #e2e8f0;color:#16a34a;font-weight:700;">${fr.expected}</td>
+      <td style="padding:7px;text-align:center;border:1px solid #e2e8f0;font-size:1.1rem;">${fr.correct?'<span style="color:#16a34a;">✓</span>':'<span style="color:#dc2626;">✗</span>'}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+  document.getElementById("result-detail").innerHTML=html;
+}
+
+// ============================================================
+// TEACHER DASHBOARD
+// ============================================================
+let teacherPW="", teacherSubs=[];
+
+async function teacherLogin(){
+  const pw=document.getElementById("teacher-pw").value;
+  const btn=document.querySelector("#teacher-login-form .btn-primary");
+  btn.disabled=true; btn.textContent="Loading…";
+  try {
+    const r=await fetch("/api/teacher",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"getData",password:pw})
+    });
+    const data=await r.json();
+    if(data.error){alert("Error: "+data.error);btn.disabled=false;btn.textContent="Login";return;}
+    teacherPW=pw; teacherSubs=data;
+    document.getElementById("teacher-login-form").style.display="none";
+    document.getElementById("teacher-content").style.display="block";
+    renderTeacher();
+  } catch(e){alert("Error: "+e.message);}
+  btn.disabled=false; btn.textContent="Login";
+}
+
+async function saveDeduct(idx, val){
+  // store deduction on the sub object in memory; teacher must re-open email to see adjusted score
+  teacherSubs[idx].unitDeductions=parseFloat(val)||0;
+  // persist to sheet via teacher API
+  try {
+    await fetch("/api/teacher",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"saveDeduction",password:teacherPW,rowIndex:teacherSubs[idx].row,deduction:parseFloat(val)||0})
+    });
+  } catch(e){ console.warn("Deduction save failed",e); }
+  renderTeacher();
+}
+
+async function savePsGrade(idx, val){
+  teacherSubs[idx].psGrade=parseFloat(val)||0;
+  try {
+    await fetch("/api/teacher",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"savePsGrade",password:teacherPW,rowIndex:teacherSubs[idx].row,psGrade:parseFloat(val)||0})
+    });
+  } catch(e){ console.warn("PS grade save failed",e); }
+  renderTeacher();
+}
+
+function renderTeacher(){
+  const el=document.getElementById("teacher-table");
+  if(teacherSubs.length===0){el.innerHTML='<p style="color:#6b7280;padding:12px 0;">No submissions yet.</p>';return;}
+
+  let html=`<table style="width:100%;border-collapse:collapse;font-size:.9rem;margin-bottom:20px;">
+    <thead><tr style="background:#f1f5f9;">
+      <th style="padding:9px;text-align:left;border:1px solid #e2e8f0;">Student</th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;">Q1–Q20</th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;">Facts /5</th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:110px;">Unit Deduction<br><span style="font-size:.72rem;font-weight:400;color:#6b7280;">(pts to subtract)</span></th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:110px;">PS Grade<br><span style="font-size:.72rem;font-weight:400;color:#6b7280;">(Problem Solving /5)</span></th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;">Actions</th>
+    </tr></thead><tbody>`;
+
+  teacherSubs.forEach((s,i)=>{
+    const g=s.graded;
+    const deduct=s.unitDeductions||0;
+    const adj=Math.max(0,Math.round((g.total-deduct)*100)/100);
+    const psGrade=s.psGrade!==undefined?s.psGrade:"";
+    const puTotal=psGrade!==""?(g.factsScore+parseFloat(psGrade)).toFixed(2)+"/ 10":"?/ 10";
+    html+=`<tr style="border-bottom:1px solid #e2e8f0;">
+      <td style="padding:9px;border:1px solid #e2e8f0;">
+        <strong>${s.name}</strong><br>
+        <small style="color:#6b7280;">${s.timestamp}</small>
+      </td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;font-weight:700;">
+        ${adj}/100
+        ${deduct>0?`<br><small style="color:var(--red);">−${deduct} units</small>`:""}
+      </td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
+        ${g.factsScore}/5<br>
+        <small style="color:#6b7280;">PU: ${puTotal}</small>
+      </td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
+        <input type="number" class="deduct-input" min="0" max="20" step="0.5"
+          value="${deduct}"
+          onchange="saveDeduct(${i},this.value)"
+          title="Enter points to deduct for missing or wrong units"/>
+      </td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
+        <input type="number" class="deduct-input" min="0" max="5" step="0.5"
+          value="${psGrade}"
+          placeholder="0–5"
+          onchange="savePsGrade(${i},this.value)"
+          title="Problem Solving grade out of 5"/>
+      </td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
+        <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openAnswerGrid(${i})">📋 Answers</button>
+        <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openEmailPreview(${i})">📧 Preview</button>
+        <button class="btn btn-green" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="sendEmail(${i})">✉ Send</button>
+        <button class="btn btn-red"  style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="confirmDel(${i})">🗑</button>
+      </td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+  el.innerHTML=html;
+}
+
+function openAnswerGrid(idx){
+  const s=teacherSubs[idx];
+  const g=s.graded;
+  const deduct=s.unitDeductions||0;
+  const adj=Math.max(0,Math.round((g.total-deduct)*100)/100);
+
+  let html=`<h3 style="margin-bottom:10px;">📋 ${s.name}</h3>
+  <p style="font-size:.85rem;color:#475569;margin-bottom:14px;">
+    Q1–Q20: <strong>${adj}/100</strong>${deduct>0?` <span style="color:var(--red);">(−${deduct} unit deductions)</span>`:""}
+    &nbsp;·&nbsp; Facts: <strong>${g.factsScore}/5</strong> (${g.factsCorrect}/16)
+  </p>`;
+
+  // Answer grid — scrollable
+  html+=`<div style="overflow-x:auto;">
+  <div style="font-weight:700;font-size:.82rem;color:#374151;margin-bottom:4px;">Test Questions — Student answer (top) / Correct answer (bottom if wrong)</div>
+  <table class="ans-grid"><thead><tr>`;
+  GRID_COLS.forEach(c=>{html+=`<th>${c.l}</th>`;});
+  html+=`</tr></thead><tbody><tr>`;
+  GRID_COLS.forEach(c=>{
+    const r=g.results[c.k];
+    const ck=(ANSWER_KEY[c.k]||[""])[0];
+    html+=`<td class="${r.correct?'ans-ok':'ans-wrong'}">
+      <div class="ans-student">${r.answer||'—'}</div>
+      ${!r.correct?`<div class="ans-key">✔ ${ck}</div>`:''}
+    </td>`;
+  });
+  html+=`</tr></tbody></table></div>`;
+
+  // Facts grid
+  html+=`<div style="overflow-x:auto;margin-top:16px;">
+  <div style="font-weight:700;font-size:.82rem;color:#374151;margin-bottom:4px;">Power-Up Facts (${g.factsCorrect}/16 correct)</div>
+  <table class="ans-grid"><thead><tr>`;
+  FACTS_PROBLEMS.forEach((_,i)=>{html+=`<th>F${i+1}</th>`;});
+  html+=`</tr></thead><tbody><tr>`;
+  FACTS_PROBLEMS.forEach(f=>{
+    const fr=g.factsResults[f.k];
+    if(!fr){html+=`<td>—</td>`;return;}
+    html+=`<td class="${fr.correct?'ans-ok':'ans-wrong'}">
+      <div class="ans-student">${fr.answer||'—'}</div>
+      ${!fr.correct?`<div class="ans-key">✔ ${fr.expected}</div>`:''}
+    </td>`;
+  });
+  html+=`</tr></tbody></table></div>`;
+
+  // Problem Solving
+  html+=`<div style="font-weight:700;font-size:.82rem;color:#374151;margin:16px 0 6px;">Problem Solving (teacher graded /5)</div>
+  <table style="width:100%;font-size:.85rem;border-collapse:collapse;border:1px solid #e2e8f0;">
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;width:100px;">Understand</td><td style="padding:6px 10px;">${g.pu_understand||'—'}</td></tr>
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">Plan</td><td style="padding:6px 10px;">${g.pu_plan||'—'}</td></tr>
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">Solve</td><td style="padding:6px 10px;">${g.pu_solve||'—'}</td></tr>
+    <tr><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">Check</td><td style="padding:6px 10px;">${g.pu_check||'—'}</td></tr>
+  </table>`;
+
+  openModal(html, null, null);
+}
+
+function openEmailPreview(idx){
+  const s=teacherSubs[idx];
+  const g=s.graded;
+  const deduct=s.unitDeductions||0;
+  const adj=Math.max(0,Math.round((g.total-deduct)*100)/100);
+
+  const Q7K=["q7ax","q7ay","q7bx","q7by","q7cx","q7cy"];
+  let correct="", wrong="";
+
+  // Q7 as one entry
+  const q7ok=Q7K.every(k=>g.results[k].correct);
+  if(q7ok){ correct+="  Q7  OK\n"; }
+  else {
+    const ax=g.results.q7ax.answer||'?', ay=g.results.q7ay.answer||'?';
+    const bx=g.results.q7bx.answer||'?', by=g.results.q7by.answer||'?';
+    const cx=g.results.q7cx.answer||'?', cy=g.results.q7cy.answer||'?';
+    wrong+=`\n  Q7: A'(${ax},${ay})  B'(${bx},${by})  C'(${cx},${cy})\n`;
+    wrong+=`       Correct: A'(-5,1)  B'(-1,1)  C'(-3,3)\n`;
+    wrong+=`       Solution: ${SOLUTIONS.q7}\n`;
+  }
+
+  ALL_KEYS.filter(k=>!Q7K.includes(k)).forEach(k=>{
+    const r=g.results[k];
+    if(r.correct){ correct+=`  ${k.toUpperCase()}  OK\n`; }
+    else {
+      wrong+=`\n  ${k.toUpperCase()}: Your answer: ${r.answer||"blank"}\n`;
+      wrong+=`       Correct: ${(ANSWER_KEY[k]||[""])[0]}\n`;
+      wrong+=`       Solution: ${SOLUTIONS[k]||""}\n`;
+    }
+  });
+
+  // Facts table text
+  let ft="  #    PROBLEM                 YOUR ANS      CORRECT\n";
+  ft+="  "+"-".repeat(56)+"\n";
+  FACTS_PROBLEMS.forEach((f,i)=>{
+    const fr=g.factsResults[f.k];
+    if(!fr)return;
+    const mark=fr.correct?"OK":"X  (correct: "+fr.expected+")";
+    ft+="  "+(i+1+".").padEnd(5)+f.text.replace(/−/g,"-").padEnd(24)+(fr.answer||"blank").padEnd(14)+mark+"\n";
+  });
+
+  const unitLine=deduct>0?`Unit deductions: -${deduct} pts\nAdjusted Score:  ${adj} / 100\n`:"";
+
+  const body=
+`Dear Parent/Guardian,
+
+${s.name} has completed Saxon Math Course 2 — Cumulative Test 16A.
+
+${"=".repeat(54)}
+TEST QUESTIONS (Q1–Q20)
+${"=".repeat(54)}
+Score: ${adj} / 100  (${g.pct}% before unit adjustments)
+${unitLine}
+CORRECT:
+${correct||"  (none)\n"}
+TO REVIEW:
+${wrong||"  None — perfect score!\n"}
+${"=".repeat(54)}
+POWER UP (graded out of 10)
+${"=".repeat(54)}
+Facts:            ${g.factsScore} / 5  (${g.factsCorrect}/16 correct)
+Problem Solving:  ${s.psGrade!==undefined&&s.psGrade!==""?s.psGrade:"__"} / 5  (teacher graded)
+TOTAL POWER UP:   ${g.factsScore} + ${s.psGrade!==undefined&&s.psGrade!==""?s.psGrade:"__"} = ${s.psGrade!==undefined&&s.psGrade!==""?(g.factsScore+parseFloat(s.psGrade)).toFixed(2):"__"} / 10
+
+FACTS DETAIL:
+${ft}
+PROBLEM SOLVING (teacher graded, 5 pts total):
+  Understand (1 pt): ${g.pu_understand||"--"}
+  Plan       (1 pt): ${g.pu_plan||"--"}
+  Solve      (2 pts): ${g.pu_solve||"--"}
+  Check      (1 pt): ${g.pu_check||"--"}
+  Correct Answer: Volume = 18 x 1 x 1.5 = 27 ft³ / 27 = 1 cubic yard
+
+${"=".repeat(54)}
+Please let me know if you notice any discrepancies so I can review them promptly.
+
+Best regards,
+Mrs. West`;
+
+  const html=`
+    <strong>Subject:</strong> Saxon Math Test 16A Results — ${s.name}<br>
+    <hr style="margin:10px 0;"/>
+    <pre style="font-size:.82rem;">${body}</pre>`;
+  openModal(html, "Copy to Clipboard", ()=>{
+    navigator.clipboard.writeText(body).then(()=>alert("Copied!")).catch(()=>alert("Copy failed — please select and copy manually."));
+  });
+}
+
+async function sendEmail(idx){
+  const s=teacherSubs[idx];
+  if(s.psGrade===undefined||s.psGrade===""){
+    if(!confirm("Problem Solving grade not entered yet. Send email with blank PS grade?"))return;
+  }
+  if(!confirm("Send email to parents/guardians for "+s.name+"?"))return;
+  try {
+    const r=await fetch("/api/teacher",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"sendEmail",password:teacherPW,rowIndex:s.row})
+    });
+    const data=await r.json();
+    if(data.error){alert("Error sending email: "+data.error);return;}
+    alert("Email sent successfully to "+s.emails.join(", ")+"!");
+  } catch(e){alert("Error: "+e.message);}
+}
+
+async function confirmDel(idx){
+  if(!confirm("Delete submission for "+teacherSubs[idx].name+"? This cannot be undone."))return;
+  try {
+    const r=await fetch("/api/teacher",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"deleteSubmission",password:teacherPW,rowIndex:teacherSubs[idx].row})
+    });
+    const data=await r.json();
+    if(data.error){alert("Error: "+data.error);return;}
+    teacherSubs.splice(idx,1);
+    renderTeacher();
+  } catch(e){alert("Error: "+e.message);}
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(html, btnLabel, btnFn){
+  document.getElementById("modal-content").innerHTML=html;
+  const btn=document.getElementById("modal-action-btn");
+  if(btnLabel&&btnFn){
+    btn.textContent=btnLabel; btn.onclick=btnFn; btn.style.display="inline-block";
+  } else {
+    btn.style.display="none";
+  }
+  document.getElementById("the-modal").classList.add("open");
+}
+function closeModal(){document.getElementById("the-modal").classList.remove("open");}
+
+// ============================================================
+// INIT
+// ============================================================
+function init(){
+  document.getElementById("inp-date").value=new Date().toISOString().split("T")[0];
+  const sel=document.getElementById("sel-name");
+  ROSTER_NAMES.slice().sort().forEach(n=>{
+    const o=document.createElement("option");
+    o.value=o.textContent=n; sel.appendChild(o);
+  });
+  buildForm();
+  showPage("page-start");
+}
+init();
+</script>
+</body>
+</html>
