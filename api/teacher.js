@@ -1,6 +1,6 @@
 // api/teacher.js
 const { TEACHER_PASSWORD, gradeData, getEmails, buildEmailBody } = require("../lib/data");
-const { getRows, deleteRow, updateCell } = require("../lib/sheets");
+const { getRows, deleteRow, updateCell, updateRow } = require("../lib/sheets");
 const nodemailer = require("nodemailer");
 
 // Column indices (0-based) matching the header written by submit.js
@@ -126,7 +126,6 @@ module.exports = async (req, res) => {
     if (action === "updateAnswers") {
       const { data } = req.body;
       const newGraded = gradeData(data);
-      // Build a single row from col D (index 4) onwards and write in one call
       const rowValues = [
         newGraded.total, newGraded.pct + "%", newGraded.letter,
         data.q1, data.q2, data.q3, data.q4, data.q5, data.q6,
@@ -137,14 +136,7 @@ module.exports = async (req, res) => {
         data.q12, data.q13, data.q14, data.q15, data.q16, data.q17, data.q18, data.q19, data.q20,
         newGraded.factsScore, JSON.stringify(data.facts || {})
       ];
-      const { sheets, spreadsheetId } = await require("../lib/sheets").getSheet();
-      const sheetRow = rowIndex + 1; // +1 because row 1 = header
-      await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: `Responses!D${sheetRow}`,
-        valueInputOption: "RAW",
-        requestBody: { values: [rowValues] }
-      });
+      await updateRow(rowIndex + 1, 4, rowValues);
       return res.json({ ok: true, graded: newGraded });
     }
 
