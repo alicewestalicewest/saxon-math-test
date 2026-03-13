@@ -28,6 +28,7 @@
   .q-group { margin-bottom:18px; }
   .q-label { font-weight:700; font-size:.92rem; color:#374151; margin-bottom:6px; display:block; }
   .q-hint { font-size:.82rem; color:var(--gray); margin-top:3px; display:block; }
+  .q-hint-unit { font-size:.82rem; color:#92400e; background:#fef3c7; border:1px solid #fcd34d; border-radius:5px; padding:3px 8px; margin-top:6px; display:inline-block; }
   .result-box { padding:18px; border-radius:10px; text-align:center; margin-bottom:0; }
   .result-box.pass { background:#dcfce7; border:2px solid #86efac; }
   .result-box.fail { background:#fee2e2; border:2px solid #fca5a5; }
@@ -314,17 +315,19 @@ function gradeData(data){
 // ============================================================
 // QUESTION DEFINITIONS
 // ============================================================
+const UNIT_HINT = "✏️ Enter the number only — write the units on your paper (teacher will grade units)";
+
 const Q1_9=[
-  {k:"q1", label:"Q1", text:"Tim mowed lawns for 2 hours and earned $7.50 per hour. Then he washed windows for 4 hours and earned $6.30 per hour. What were Tim's average earnings per hour for all 6 hours?", hint:"Number only — write units on your paper"},
+  {k:"q1", label:"Q1", text:"Tim mowed lawns for 2 hours and earned $7.50 per hour. Then he washed windows for 4 hours and earned $6.30 per hour. What were Tim's average earnings per hour for all 6 hours?", hint:UNIT_HINT},
   {k:"q2", label:"Q2", text:"Evaluate: x + (x² − xy) − y, where x = 5, y = 4"},
   {k:"q3", label:"Q3", text:"Sketch an equilateral triangle. An equilateral triangle:",
    mc:["a. has 2 equal sides","b. has 3 equal sides","c. has no equal sides, all sides are of a different length"]},
-  {k:"q4", label:"Q4", text:"When Nasim cleaned his room he found that the ratio of clean clothes to dirty clothes was 3 to 4. If 35 articles of clothing were discovered, how many were clean?", hint:"Number only — write units on your paper"},
-  {k:"q5", label:"Q5", text:"In 25 minutes, 400 customers entered the attraction. At this rate, how many customers would enter the attraction in 1 hour?", hint:"Number only — write units on your paper"},
-  {k:"q6", label:"Q6", text:"The diameter of a round skating rink is 15 m. Find the circumference of the rink to the nearest meter.", hint:"Number only — write units on your paper"},
+  {k:"q4", label:"Q4", text:"When Nasim cleaned his room he found that the ratio of clean clothes to dirty clothes was 3 to 4. If 35 articles of clothing were discovered, how many were clean?", hint:UNIT_HINT},
+  {k:"q5", label:"Q5", text:"In 25 minutes, 400 customers entered the attraction. At this rate, how many customers would enter the attraction in 1 hour?", hint:UNIT_HINT},
+  {k:"q6", label:"Q6", text:"The diameter of a round skating rink is 15 m. Find the circumference of the rink to the nearest meter.", hint:UNIT_HINT},
   {k:"q7", label:"Q7", text:"The vertices of △ABC are A(1,1), B(5,1), and C(3,3). Draw △ABC and its image △A′B′C′ translated 6 units to the left. Enter the numbers only for each vertex:", coords:true},
   {k:"q8", label:"Q8", text:"Graph x > −5 on a number line.", mc_nl:true},
-  {k:"q9", label:"Q9", text:"Natasha found that the 14 inches from her knee joint to her hip joint was ¼ of her total height. What was Natasha's total height?", hint:"Number only — write units on your paper"},
+  {k:"q9", label:"Q9", text:"Natasha found that the 14 inches from her knee joint to her hip joint was ¼ of her total height. What was Natasha's total height?", hint:UNIT_HINT},
 ];
 
 const Q10_PARTS=[
@@ -334,18 +337,18 @@ const Q10_PARTS=[
   {k:"q10d",sub:"d",text:"(1/2)(−1/3)"},
 ];
 const Q11_PARTS=[
-  {k:"q11a",sub:"a",text:"5/6 as a decimal",    hint:"If the decimal repeats, write the repeating digit twice (e.g. 70.22)"},
-  {k:"q11b",sub:"b",text:"5/6 as a percent",     hint:"If the decimal repeats, write the repeating digit twice (e.g. 70.22%)"},
+  {k:"q11a",sub:"a",text:"5/6 as a decimal",    hint:"If the decimal repeats, write the repeating digit twice (e.g. 0.83)"},
+  {k:"q11b",sub:"b",text:"5/6 as a percent",     hint:"If the decimal repeats, write the repeating digit twice (e.g. 83.33%)"},
   {k:"q11c",sub:"c",text:"0.6 as a fraction (simplest form)"},
   {k:"q11d",sub:"d",text:"0.6 as a percent"},
 ];
 const Q12_20=[
-  {k:"q12",label:"Q12",text:"Find the area of this trapezoid. (bases: 5 m and 7 m, height: 6 m)", hint:"Number only — write units on your paper"},
+  {k:"q12",label:"Q12",text:"Find the area of this trapezoid. (bases: 5 m and 7 m, height: 6 m)", hint:UNIT_HINT},
   {k:"q13",label:"Q13",text:"Six hundred is 4/9 of what number?"},
-  {k:"q14",label:"Q14",text:"What percent of 40 is 30?", hint:"Number only — write units on your paper"},
+  {k:"q14",label:"Q14",text:"What percent of 40 is 30?"},
   {k:"q15",label:"Q15",text:"3/5 m = 48. Solve for m."},
   {k:"q16",label:"Q16",text:"1.5 = x − 0.08. Solve for x."},
-  {k:"q17",label:"Q17",text:"5 1/3 %"},
+  {k:"q17",label:"Q17",text:"Simplify: 5⅓ / 100"},
   {k:"q18",label:"Q18",text:"3³ + 2 · 5 − 3 · 2²  ÷  √(3² + 4²)"},
   {k:"q19",label:"Q19",text:"4 2/3 ÷ 1.4", hint:"Express as a fraction or mixed number"},
   {k:"q20",label:"Q20",text:"−2.6 − (−4.2) + (+3.5)"},
@@ -454,7 +457,7 @@ function buildForm(){
     return `<div class="q-group">
       <label class="q-label">${q.label}. ${q.text}</label>
       <input type="text" id="${q.k}" placeholder="Your answer" autocomplete="off"/>
-      ${q.hint?`<span class="q-hint">${q.hint}</span>`:""}
+      ${q.hint===UNIT_HINT?`<span class="q-hint-unit">${q.hint}</span>`:q.hint?`<span class="q-hint">${q.hint}</span>`:""}
     </div>`;
   }).join("");
 
@@ -496,7 +499,7 @@ function buildForm(){
     `<div class="q-group">
       <label class="q-label">${q.label}. ${q.text}</label>
       <input type="text" id="${q.k}" placeholder="Your answer" autocomplete="off"/>
-      ${q.hint?`<span class="q-hint">${q.hint}</span>`:""}
+      ${q.hint===UNIT_HINT?`<span class="q-hint-unit">${q.hint}</span>`:q.hint?`<span class="q-hint">${q.hint}</span>`:""}
     </div>`
   ).join("");
 }
@@ -753,6 +756,7 @@ function renderTeacher(){
       </td>
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
         <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openAnswerGrid(${i})">📋 Answers</button>
+        <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openEditAnswers(${i})">✏️ Edit</button>
         <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openEmailPreview(${i})">📧 Preview</button>
         <button class="btn btn-green" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="sendEmail(${i})">✉ Send</button>
         <button class="btn btn-red"  style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="confirmDel(${i})">🗑</button>
@@ -922,6 +926,125 @@ async function sendEmail(idx){
     if(data.error){alert("Error sending email: "+data.error);return;}
     alert("Email sent successfully to "+s.emails.join(", ")+"!");
   } catch(e){alert("Error: "+e.message);}
+}
+
+function openEditAnswers(idx){
+  const s=teacherSubs[idx];
+  const g=s.graded;
+  const Q7K=["q7ax","q7ay","q7bx","q7by","q7cx","q7cy"];
+
+  let html=`<h3 style="margin-bottom:6px;">✏️ Edit Answers — ${s.name}</h3>
+  <p style="font-size:.82rem;color:#6b7280;margin-bottom:14px;">Correct any answer that the student entered incorrectly online. The score will be recalculated when you save.</p>
+  <div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+  <thead><tr style="background:#f1f5f9;">
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:left;">Question</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Student Answer</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Correct Answer</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Override</th>
+  </tr></thead><tbody>`;
+
+  // Q1-Q6, Q8-Q9, Q10a-d, Q11a-d, Q12-Q20
+  const NON_Q7=ALL_KEYS.filter(k=>!Q7K.includes(k));
+  NON_Q7.forEach(k=>{
+    const r=g.results[k];
+    const ck=(ANSWER_KEY[k]||[""])[0];
+    html+=`<tr style="background:${r.correct?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;">${k.toUpperCase()}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">${r.answer||'—'}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;color:#16a34a;font-weight:600;">${ck}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">
+        <input type="text" id="edit_${k}" value="${r.answer||''}"
+          style="width:90px;padding:4px 6px;border:1.5px solid #d1d5db;border-radius:5px;text-align:center;font-size:.85rem;"
+          placeholder="new answer"/>
+      </td>
+    </tr>`;
+  });
+
+  // Q7 as a group
+  html+=`<tr style="background:${Q7K.every(k=>g.results[k].correct)?'#f0fdf4':'#fff1f2'};">
+    <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;">Q7</td>
+    <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-size:.82rem;">
+      A'(${g.results.q7ax.answer||'?'},${g.results.q7ay.answer||'?'})<br>
+      B'(${g.results.q7bx.answer||'?'},${g.results.q7by.answer||'?'})<br>
+      C'(${g.results.q7cx.answer||'?'},${g.results.q7cy.answer||'?'})
+    </td>
+    <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;color:#16a34a;font-weight:600;font-size:.82rem;">
+      A'(−5,1)<br>B'(−1,1)<br>C'(−3,3)
+    </td>
+    <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-size:.82rem;">
+      A' x:<input type="text" id="edit_q7ax" value="${g.results.q7ax.answer||''}" style="width:44px;padding:3px;border:1.5px solid #d1d5db;border-radius:4px;text-align:center;margin:2px;"/>
+      y:<input type="text" id="edit_q7ay" value="${g.results.q7ay.answer||''}" style="width:44px;padding:3px;border:1.5px solid #d1d5db;border-radius:4px;text-align:center;margin:2px;"/><br>
+      B' x:<input type="text" id="edit_q7bx" value="${g.results.q7bx.answer||''}" style="width:44px;padding:3px;border:1.5px solid #d1d5db;border-radius:4px;text-align:center;margin:2px;"/>
+      y:<input type="text" id="edit_q7by" value="${g.results.q7by.answer||''}" style="width:44px;padding:3px;border:1.5px solid #d1d5db;border-radius:4px;text-align:center;margin:2px;"/><br>
+      C' x:<input type="text" id="edit_q7cx" value="${g.results.q7cx.answer||''}" style="width:44px;padding:3px;border:1.5px solid #d1d5db;border-radius:4px;text-align:center;margin:2px;"/>
+      y:<input type="text" id="edit_q7cy" value="${g.results.q7cy.answer||''}" style="width:44px;padding:3px;border:1.5px solid #d1d5db;border-radius:4px;text-align:center;margin:2px;"/>
+    </td>
+  </tr>`;
+
+  html+=`</tbody></table></div>`;
+
+  // Facts section
+  html+=`<div style="font-weight:700;font-size:.88rem;color:#374151;margin:18px 0 6px;">⚡ Power-Up Facts</div>
+  <div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+  <thead><tr style="background:#f1f5f9;">
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:left;">#</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:left;">Problem</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Student Answer</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Correct</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Override</th>
+  </tr></thead><tbody>`;
+  FACTS_PROBLEMS.forEach((f,i)=>{
+    const fr=g.factsResults[f.k];
+    if(!fr)return;
+    html+=`<tr style="background:${fr.correct?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;color:#6b7280;font-weight:700;">${i+1}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:600;">${f.text}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">${fr.answer||'—'}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;color:#16a34a;font-weight:600;">${fr.expected}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">
+        <input type="text" id="edit_${f.k}" value="${fr.answer||''}"
+          style="width:80px;padding:4px 6px;border:1.5px solid #d1d5db;border-radius:5px;text-align:center;font-size:.85rem;"
+          placeholder="override"/>
+      </td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+
+  openModal(html, "💾 Save & Regrade", ()=>saveEditedAnswers(idx));
+}
+
+async function saveEditedAnswers(idx){
+  const s=teacherSubs[idx];
+  // Collect all edited question values
+  ALL_KEYS.forEach(k=>{
+    const el=document.getElementById("edit_"+k);
+    if(el) s.data[k]=el.value.trim();
+  });
+  // Collect all edited facts values
+  FACTS_PROBLEMS.forEach(f=>{
+    const el=document.getElementById("edit_"+f.k);
+    if(el){
+      if(!s.data.facts) s.data.facts={};
+      s.data.facts[f.k]=el.value.trim();
+    }
+  });
+  // Regrade
+  const newGraded=gradeData(s.data);
+  s.graded=newGraded;
+  // Save to server
+  try {
+    const r=await fetch("/api/teacher",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"updateAnswers",password:teacherPW,rowIndex:s.row,data:s.data})
+    });
+    const result=await r.json();
+    if(result.error){alert("Error saving: "+result.error);return;}
+  } catch(e){alert("Error: "+e.message);return;}
+  closeModal();
+  renderTeacher();
+  alert("Answers updated and score recalculated!");
 }
 
 async function confirmDel(idx){
