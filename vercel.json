@@ -4,8 +4,8 @@
     { "source": "/api/students", "destination": "/api/students.js" },
     { "source": "/api/submit", "destination": "/api/submit.js" },
     { "source": "/api/teacher", "destination": "/api/teacher.js" },
-    { "source": "/test16", "destination": "/public/index.html" },
     { "source": "/test17", "destination": "/public/test17.html" },
+    { "source": "/test16", "destination": "/public/index.html" },
     { "source": "/", "destination": "/public/index.html" }
   ]
 }
