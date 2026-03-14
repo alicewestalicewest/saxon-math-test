@@ -13,13 +13,13 @@ const nodemailer = require("nodemailer");
 // 28:Q12 29:Q13 30:Q14 31:Q15 32:Q16 33:Q17 34:Q18 35:Q19 36:Q20
 // 37:FactsScore 38:FactsAnswers
 // 39:PU_Understand 40:PU_Plan 41:PU_Solve 42:PU_Check
-// 43:UnitDeductions
+// 43:UnitDeductions 44:PsGrade 45:SketchGrade 46:GraphGrade
 
 function parseRows(rows) {
   const results = [];
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    if (!r || !r[1]) continue; // skip empty rows
+    if (!r || !r[1]) continue;
 
     let facts = {};
     try { facts = JSON.parse(r[38] || "{}"); } catch(e) {}
@@ -43,7 +43,9 @@ function parseRows(rows) {
     const graded = gradeData(data);
     const emails = getEmails(r[1]);
     const unitDeductions = parseFloat(r[43] || 0) || 0;
-    const psGrade = r[44] !== undefined && r[44] !== "" ? parseFloat(r[44]) : "";
+    const psGrade     = r[44] !== undefined && r[44] !== "" ? parseFloat(r[44]) : "";
+    const sketchGrade = r[45] !== undefined && r[45] !== "" ? parseFloat(r[45]) : "";
+    const graphGrade  = r[46] !== undefined && r[46] !== "" ? parseFloat(r[46]) : "";
 
     results.push({
       row: i,
@@ -54,7 +56,9 @@ function parseRows(rows) {
       data,
       graded,
       unitDeductions,
-      psGrade
+      psGrade,
+      sketchGrade,
+      graphGrade
     });
   }
   return results;
@@ -77,15 +81,25 @@ module.exports = async (req, res) => {
     }
 
     if (action === "saveDeduction") {
-      // Update column 44 (index 43, col AR) for the given row (+1 for header row)
       await updateCell(rowIndex + 1, 44, deduction);
       return res.json({ ok: true });
     }
 
     if (action === "savePsGrade") {
       const { psGrade } = req.body;
-      // Update column 45 (index 44, col AS) for the given row
       await updateCell(rowIndex + 1, 45, psGrade);
+      return res.json({ ok: true });
+    }
+
+    if (action === "saveSketchGrade") {
+      const { sketchGrade } = req.body;
+      await updateCell(rowIndex + 1, 46, sketchGrade);
+      return res.json({ ok: true });
+    }
+
+    if (action === "saveGraphGrade") {
+      const { graphGrade } = req.body;
+      await updateCell(rowIndex + 1, 47, graphGrade);
       return res.json({ ok: true });
     }
 
@@ -103,7 +117,6 @@ module.exports = async (req, res) => {
       const sub = subs.find(s => s.row === rowIndex);
       if (!sub) return res.status(404).json({ error: "Submission not found" });
 
-      // psGrade may have been updated in the same session — use what's in the sheet
       const e = buildEmailBody(sub);
       if (!e.to || e.to.length === 0)
         return res.status(400).json({ error: "No email on file for " + sub.name });
