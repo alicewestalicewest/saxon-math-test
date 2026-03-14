@@ -4,6 +4,8 @@
     { "src": "/api/students", "dest": "/api/students.js" },
     { "src": "/api/submit", "dest": "/api/submit.js" },
     { "src": "/api/teacher", "dest": "/api/teacher.js" },
+    { "src": "/test16", "dest": "/public/index.html" },
+    { "src": "/test17", "dest": "/public/test17.html" },
     { "src": "/(.*)", "dest": "/public/index.html" }
   ]
 }
