@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Saxon Math Test 17A</title>
+<style>
+  :root { --blue:#2563eb; --blue-dark:#1d4ed8; --green:#16a34a; --red:#dc2626; --gray:#6b7280; --bg:#f8fafc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:var(--bg); color:#1e293b; }
+  header { background:var(--blue); color:#fff; padding:16px 24px; display:flex; align-items:center; gap:12px; }
+  header h1 { font-size:1.3rem; }
+  .container { max-width:860px; margin:0 auto; padding:24px 16px; }
+  .card { background:#fff; border-radius:12px; box-shadow:0 1px 6px #0001; padding:24px; margin-bottom:20px; }
+  label { display:block; font-weight:600; margin-bottom:4px; font-size:.93rem; }
+  input, select, textarea { width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:7px; font-size:.97rem; transition:border .2s; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--blue); }
+  .btn { padding:10px 22px; border:none; border-radius:8px; font-size:.97rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .btn-primary { background:var(--blue); color:#fff; } .btn-primary:hover { background:var(--blue-dark); }
+  .btn-green { background:var(--green); color:#fff; }
+  .btn-red { background:var(--red); color:#fff; }
+  .btn-gray { background:#e5e7eb; color:#374151; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .section-title { font-size:1.08rem; font-weight:700; color:var(--blue); margin-bottom:14px; padding-bottom:6px; border-bottom:2px solid #e2e8f0; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  @media(max-width:560px){ .grid2{grid-template-columns:1fr;} .grid4{grid-template-columns:1fr 1fr;} }
+  .q-group { margin-bottom:18px; }
+  .q-label { font-weight:700; font-size:.92rem; color:#374151; margin-bottom:6px; display:block; }
+  .q-hint { font-size:.82rem; color:var(--gray); margin-top:3px; display:block; }
+  .q-hint-unit { font-size:.82rem; color:#92400e; background:#fef3c7; border:1px solid #fcd34d; border-radius:5px; padding:3px 8px; margin-top:6px; display:inline-block; }
+  .result-box { padding:18px; border-radius:10px; text-align:center; }
+  .result-box.pass { background:#dcfce7; border:2px solid #86efac; }
+  .result-box.fail { background:#fee2e2; border:2px solid #fca5a5; }
+  .score-big { font-size:2.2rem; font-weight:800; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:20px; font-size:.8rem; font-weight:600; }
+  .pill-green { background:#dcfce7; color:var(--green); }
+  .pill-red { background:#fee2e2; color:var(--red); }
+  .review-item { padding:10px 14px; border-radius:8px; margin-bottom:8px; border-left:4px solid; }
+  .review-item.correct { border-color:var(--green); background:#f0fdf4; }
+  .review-item.wrong { border-color:var(--red); background:#fff1f2; }
+  .modal-bg { display:none; position:fixed; inset:0; background:#0006; z-index:100; align-items:center; justify-content:center; }
+  .modal-bg.open { display:flex; }
+  .modal { background:#fff; border-radius:14px; padding:28px; max-width:760px; width:96%; max-height:90vh; overflow-y:auto; }
+  .facts-table { width:100%; border-collapse:collapse; margin-bottom:8px; }
+  .facts-table th { background:#eff6ff; padding:8px 10px; border:1.5px solid #bfdbfe; text-align:center; font-size:.88rem; }
+  .facts-table td { padding:8px 6px; border:1.5px solid #e2e8f0; text-align:center; }
+  .facts-table td:first-child { font-weight:700; font-size:.92rem; background:#f8fafc; }
+  .facts-table input { width:90px; padding:6px 8px; font-size:.9rem; text-align:center; }
+  pre { white-space:pre-wrap; font-family:inherit; font-size:.85rem; }
+  .spinner { display:inline-block; width:18px; height:18px; border:3px solid #fff4; border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:6px; }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ans-grid { width:100%; border-collapse:collapse; font-size:.78rem; margin-top:6px; }
+  .ans-grid th { background:#f1f5f9; padding:4px 6px; border:1px solid #e2e8f0; text-align:center; white-space:nowrap; }
+  .ans-grid td { padding:4px 6px; border:1px solid #e2e8f0; text-align:center; vertical-align:top; min-width:44px; }
+  .ans-ok { background:#f0fdf4; }
+  .ans-wrong { background:#fff1f2; }
+  .ans-student { font-weight:700; font-size:.82rem; }
+  .ans-key { font-size:.72rem; color:var(--green); margin-top:2px; }
+  .deduct-input { width:68px !important; padding:4px 6px !important; font-size:.88rem; text-align:center; }
+  .nl-opt { display:flex; align-items:center; gap:12px; margin-bottom:14px; cursor:pointer; padding:8px; border-radius:8px; border:1.5px solid #e2e8f0; }
+  /* Q13 scientific notation input */
+  .sci-wrap { display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .sci-coeff { width:90px !important; text-align:center; }
+  .sci-exp { width:56px !important; text-align:center; font-size:.85rem; }
+  .sci-label { font-size:1rem; font-weight:600; color:#374151; white-space:nowrap; }
+  /* Parallelogram SVG diagram */
+  .diagram-box { background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px; padding:16px; display:inline-block; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+  <h1>Saxon Math Course 2 — Cumulative Test 17A</h1>
+</header>
+
+<div class="container">
+
+<!-- START -->
+<div id="page-start">
+  <div class="card">
+    <div class="section-title">Welcome</div>
+    <p style="margin-bottom:18px;color:#475569;">Select your name and today's date to begin the test. Your answers will be submitted and graded automatically.</p>
+    <div class="grid2" style="margin-bottom:16px;">
+      <div>
+        <label for="sel-name">Student Name</label>
+        <select id="sel-name"><option value="">-- Select your name --</option></select>
+      </div>
+      <div>
+        <label for="inp-date">Date</label>
+        <input type="date" id="inp-date"/>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="startTest()">Begin Test →</button>
+    <button class="btn btn-gray" style="margin-left:10px;" onclick="showTeacherLogin()">Teacher Login</button>
+  </div>
+</div>
+
+<!-- FORM -->
+<div id="page-form" style="display:none;">
+  <div class="card" style="padding:14px 24px;background:#eff6ff;border:1.5px solid #bfdbfe;">
+    <span style="font-size:.88rem;color:#1e40af;font-weight:600;">📝 Student:</span>
+    <span id="form-student-name" style="font-size:1rem;font-weight:800;color:#1d4ed8;margin-left:6px;"></span>
+    <span style="font-size:.82rem;color:#64748b;margin-left:12px;" id="form-test-date"></span>
+  </div>
+  <div class="card"><div id="questions-1-9"></div></div>
+  <div class="card"><div id="questions-10-15"></div></div>
+  <div class="card"><div id="questions-16-20"></div></div>
+  <div class="card">
+    <div class="section-title">⚡ POWER UP: Percent Facts</div>
+    <p class="q-hint" style="margin-bottom:14px;">Write the equivalent decimal and fraction for each percent.</p>
+    <div style="overflow-x:auto;">
+    <table class="facts-table">
+      <thead>
+        <tr>
+          <th>Percent</th><th>Decimal</th><th>Fraction</th>
+          <th style="width:20px;background:#fff;border:none;"></th>
+          <th>Percent</th><th>Decimal</th><th>Fraction</th>
+        </tr>
+      </thead>
+      <tbody id="facts-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">📝 POWER UP: Problem Solving</div>
+    <p style="font-weight:600;margin-bottom:12px;color:#374151;">A goat is kept on a 4-meter chain connected to a metal hook in the ground. Approximately what area of grass can she eat? If she is chained at the center of the 8-m side of the garage, what area of grass can she eat?</p>
+    <div class="grid2">
+      <div class="q-group">
+        <label class="q-label">Understand</label>
+        <span class="q-hint" style="margin-bottom:4px;">What information am I given? What am I asked to find or do?</span>
+        <textarea id="pu_understand" rows="3" placeholder="Write here..."></textarea>
+      </div>
+      <div class="q-group">
+        <label class="q-label">Plan</label>
+        <span class="q-hint" style="margin-bottom:4px;">How can I use the information I am given? Which strategy should I try?</span>
+        <textarea id="pu_plan" rows="3" placeholder="Write here..."></textarea>
+      </div>
+      <div class="q-group">
+        <label class="q-label">Solve</label>
+        <span class="q-hint" style="margin-bottom:4px;">Did I follow the plan? Did I show my work? Did I write the answer?</span>
+        <textarea id="pu_solve" rows="3" placeholder="Write here..."></textarea>
+      </div>
+      <div class="q-group">
+        <label class="q-label">Check</label>
+        <span class="q-hint" style="margin-bottom:4px;">Did I use the correct information? Did I do what was asked? Is my answer reasonable?</span>
+        <textarea id="pu_check" rows="3" placeholder="Write here..."></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="text-align:center;">
+    <p style="margin-bottom:14px;color:#475569;">Review your answers before submitting. You can only submit once.</p>
+    <button class="btn btn-primary" id="submit-btn" onclick="submitTest()">Submit Test</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="page-result" style="display:none;">
+  <div class="card" id="result-summary"></div>
+  <div class="card" id="result-detail"></div>
+</div>
+
+<!-- TEACHER -->
+<div id="page-teacher" style="display:none;">
+  <div class="card">
+    <div class="section-title">🔐 Teacher Dashboard</div>
+    <div id="teacher-login-form">
+      <label>Password</label>
+      <input type="password" id="teacher-pw" placeholder="Enter teacher password"
+             style="max-width:280px;display:inline-block;margin-right:10px;"
+             onkeydown="if(event.key==='Enter')teacherLogin()"/>
+      <button class="btn btn-primary" onclick="teacherLogin()">Login</button>
+      <button class="btn btn-gray" style="margin-left:8px;" onclick="showPage('page-start')">Cancel</button>
+    </div>
+    <div id="teacher-content" style="display:none;">
+      <div id="teacher-table"></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="the-modal">
+  <div class="modal">
+    <div id="modal-content"></div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-green" id="modal-action-btn" style="display:none;"></button>
+      <button class="btn btn-gray" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// ROSTER
+// ============================================================
+const ROSTER_NAMES = [
+  "Aarohi Agrawal","Alisha Agrawal","Ananya Arvind","Elizabeth Cai","Eloisa Keojampa",
+  "Eric Huang","Erin Yuen","Evan Chang","Jennifer Chen","Jenny Montgomery",
+  "Jooha Park","Leo Matsiev","Nathan Streeter","Peyton Pereira","Rynshall Chen",
+  "Samiha Java","Tate Yeung","Thea Angelidis-Smith","Vassilis Papadimitriou","Isabelle Yan",
+  "Ethan Jiang","Aarush Gupta","Aria Pan","Kaya Tobiczyk","Claire You",
+  "Lisa Zhang","Ashra Vaka","Erik Xu","Alisha Jain","Catherine Wang",
+  "Rita Liang","Vikram Vemoory","Neha Murthy","Oliver Liu","Becca Zhang",
+  "Francis Wang","Xinyan Shen","Xinkai Shen","William Lu","Elvin Qin","Maya Benavidez"
+];
+
+// ============================================================
+// ANSWER KEY & POINTS
+// ============================================================
+const ANSWER_KEY = {
+  q1:   ["6"],
+  q2a:  ["77"],
+  q2b:  ["75"],
+  q2c:  ["60,70,80","60, 70, 80","60 70 80"],
+  q2d:  ["40"],
+  q3:   ["99"],
+  q4:   ["470"],
+  q5:   ["a"],
+  q6:   ["4xy-3x","4xy - 3x"],
+  q7:   ["24"],
+  q8:   ["180"],
+  q9a:  ["50000","$50,000","$50000","50,000"],
+  q9b:  ["10","10%","0.1","1/10"],
+  q10:  ["24"],
+  q11:  ["113.04"],
+  q12a: ["0.35"],
+  q12b: ["35","35%","0.35"],
+  q12c: ["3/50"],
+  q12d: ["0.06"],
+  q13c: ["3.25"],   // coefficient
+  q13e: ["15"],     // exponent
+  q14:  ["parallelogram","Parallelogram"],
+  q14p: ["49"],
+  q15:  ["140"],
+  q16:  ["11"],
+  q17:  ["8/9"],
+  q18:  ["12"],
+  q19:  ["-8"],
+  q20a: ["1"],
+  q20b: ["3"],
+  q20c: ["5"]
+};
+
+const POINTS = {
+  q1:5,
+  q2a:1.25, q2b:1.25, q2c:1.25, q2d:1.25,
+  q3:5, q4:5, q5:5, q6:5, q7:5, q8:5,
+  q9a:2.5, q9b:2.5,
+  q10:5, q11:5,
+  q12a:1.25, q12b:1.25, q12c:1.25, q12d:1.25,
+  q13c:2.5, q13e:2.5,
+  q14:2.5, q14p:2.5,
+  q15:5,
+  q16:5, q17:5, q18:5, q19:5,
+  q20a:1.67, q20b:1.67, q20c:1.66
+};
+
+const ALL_KEYS = [
+  "q1","q2a","q2b","q2c","q2d","q3","q4","q5","q6","q7","q8",
+  "q9a","q9b","q10","q11",
+  "q12a","q12b","q12c","q12d",
+  "q13c","q13e","q14","q14p","q15",
+  "q16","q17","q18","q19","q20a","q20b","q20c"
+];
+
+const SOLUTIONS = {
+  q1:   "Ratio won:failed:played = 5:1:6 → 1/6 = f/36 → f = 6 games",
+  q2a:  "(60+60+65+70+70+80+80+90+95+100) ÷ 10 = 770 ÷ 10 = 77",
+  q2b:  "Sorted: 60,60,65,70,70,80,80,90,95,100 → median = (70+80)/2 = 75",
+  q2c:  "60, 70, and 80 each appear twice",
+  q2d:  "100 − 60 = 40",
+  q3:   "11/4 = d/36 → 4d = 396 → d = 99",
+  q4:   "0.47 L × 1000 mL/L = 470 mL",
+  q5:   "x ≤ −3: closed circle at −3, shaded to the left",
+  q6:   "3xy + xy = 4xy; −4x + x = −3x → 4xy − 3x",
+  q7:   "2/10 = d/120 → 10d = 240 → d = 24 miles",
+  q8:   "65/100 = 117/t → 65t = 11,700 → t = 180",
+  q9a:  "$45,000 = (9/10) × goal → goal = $50,000",
+  q9b:  "Short by $5,000 / $50,000 = 1/10 = 10%",
+  q10:  "V = l × w × h = 4 × 2 × 3 = 24 in³",
+  q11:  "r = 4 in; A = π r² = 3.14 × 16 = 113.04 in²",
+  q12a: "7 ÷ 20 = 0.35",
+  q12b: "0.35 × 100 = 35%",
+  q12c: "6% = 6/100 = 3/50",
+  q12d: "6% = 0.06",
+  q13c: "2.5 × 1.3 = 3.25",
+  q13e: "10⁹ × 10⁶ = 10¹⁵ → exponent is 15",
+  q14:  "Two pairs of parallel sides → parallelogram",
+  q14p: "14 + 10.5 + 14 + 10.5 = 49 cm",
+  q15:  "A = base × height = 14 × 10 = 140 cm²",
+  q16:  "15.4 ÷ 1.4 = 11",
+  q17:  "z = 4/3 − 4/9 = 12/9 − 4/9 = 8/9",
+  q18:  "3{25−[49−28]} = 3{25−21} = 3×4 = 12",
+  q19:  "(−3)+(−4)+(+7)+(−8) = −8",
+  q20a: "y = 2(0)+1 = 1",
+  q20b: "y = 2(1)+1 = 3",
+  q20c: "y = 2(2)+1 = 5"
+};
+
+// ============================================================
+// FACTS POWER UP
+// ============================================================
+const FACTS_ROWS  = [
+  {pct:"10%",  dec:["0.1"],           frac:["1/10"]},
+  {pct:"90%",  dec:["0.9"],           frac:["9/10"]},
+  {pct:"5%",   dec:["0.05"],          frac:["1/20"]},
+  {pct:"12½%", dec:["0.125"],         frac:["1/8"]},
+  {pct:"50%",  dec:["0.5"],           frac:["1/2"]},
+  {pct:"25%",  dec:["0.25"],          frac:["1/4"]},
+];
+const FACTS_ROWS2 = [
+  {pct:"33⅓%", dec:["0.3","0.33","0.333"], frac:["1/3"]},
+  {pct:"20%",  dec:["0.2"],                frac:["1/5"]},
+  {pct:"75%",  dec:["0.75"],               frac:["3/4"]},
+  {pct:"66⅔%", dec:["0.6","0.67","0.667"], frac:["2/3"]},
+  {pct:"1%",   dec:["0.01"],               frac:["1/100"]},
+  {pct:"250%", dec:["2.5"],                frac:["2 1/2","5/2"]},
+];
+
+const FACTS_KEYS_LEFT  = ["f1d","f1f","f2d","f2f","f3d","f3f","f4d","f4f","f5d","f5f","f6d","f6f"];
+const FACTS_KEYS_RIGHT = ["f7d","f7f","f8d","f8f","f9d","f9f","f10d","f10f","f11d","f11f","f12d","f12f"];
+const FACTS_ANSWERS = {};
+FACTS_ROWS.forEach((r,i)=>{
+  FACTS_ANSWERS[`f${i+1}d`]=r.dec;
+  FACTS_ANSWERS[`f${i+1}f`]=r.frac;
+});
+FACTS_ROWS2.forEach((r,i)=>{
+  FACTS_ANSWERS[`f${i+7}d`]=r.dec;
+  FACTS_ANSWERS[`f${i+7}f`]=r.frac;
+});
+
+const GRID_COLS = [
+  {k:"q1",l:"Q1"},{k:"q2a",l:"Q2a"},{k:"q2b",l:"Q2b"},{k:"q2c",l:"Q2c"},{k:"q2d",l:"Q2d"},
+  {k:"q3",l:"Q3"},{k:"q4",l:"Q4"},{k:"q5",l:"Q5"},{k:"q6",l:"Q6"},{k:"q7",l:"Q7"},{k:"q8",l:"Q8"},
+  {k:"q9a",l:"Q9a"},{k:"q9b",l:"Q9b"},
+  {k:"q10",l:"Q10"},{k:"q11",l:"Q11"},
+  {k:"q12a",l:"12a"},{k:"q12b",l:"12b"},{k:"q12c",l:"12c"},{k:"q12d",l:"12d"},
+  {k:"q13c",l:"13coeff"},{k:"q13e",l:"13exp"},{k:"q14",l:"Q14"},{k:"q14p",l:"Q14P"},{k:"q15",l:"Q15"},
+  {k:"q16",l:"Q16"},{k:"q17",l:"Q17"},{k:"q18",l:"Q18"},{k:"q19",l:"Q19"},
+  {k:"q20a",l:"20a"},{k:"q20b",l:"20b"},{k:"q20c",l:"20c"}
+];
+
+const UNIT_HINT = "✏️ Enter the number only — write the units on your paper";
+
+// ============================================================
+// NUMBER LINE DRAWER
+// ============================================================
+function drawNL(opts){
+  const W=320,H=54,pad=18,nums=[-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7];
+  const x=n=>pad+((n+7)/14)*(W-pad*2);
+  let s=`<svg width="${W}" height="${H}" style="display:block;overflow:visible;">`;
+  s+=`<line x1="${pad-10}" y1="32" x2="${W-pad+10}" y2="32" stroke="#1e293b" stroke-width="2"/>`;
+  s+=`<polygon points="${W-pad+10},32 ${W-pad+4},28 ${W-pad+4},36" fill="#1e293b"/>`;
+  s+=`<polygon points="${pad-10},32 ${pad-4},28 ${pad-4},36" fill="#1e293b"/>`;
+  nums.forEach(n=>{const cx=x(n);
+    s+=`<line x1="${cx}" y1="26" x2="${cx}" y2="38" stroke="#1e293b" stroke-width="1.5"/>`;
+    s+=`<text x="${cx}" y="52" text-anchor="middle" font-size="10" fill="#374151">${n}</text>`;
+  });
+  if(opts.rightShade){const cx=x(opts.dot);s+=`<rect x="${cx}" y="28" width="${W-pad+10-cx}" height="8" fill="#2563eb" opacity="0.25"/>`;}
+  if(opts.leftShade){const cx=x(opts.dot);s+=`<rect x="${pad-10}" y="28" width="${cx-(pad-10)}" height="8" fill="#2563eb" opacity="0.25"/>`;}
+  if(opts.dot!==undefined){const cx=x(opts.dot);
+    s+=opts.open?`<circle cx="${cx}" cy="32" r="6" fill="white" stroke="#2563eb" stroke-width="2.5"/>`:
+                 `<circle cx="${cx}" cy="32" r="6" fill="#2563eb"/>`;
+  }
+  return s+`</svg>`;
+}
+
+// Q5: x ≤ −3 — answer is "a" (closed circle at -3, shaded LEFT)
+const NL_OPTS_Q5 = [
+  {label:"a", dot:-3, open:false, leftShade:true,  rightShade:false},
+  {label:"b", dot:-3, open:true,  leftShade:true,  rightShade:false},
+  {label:"c", dot:-3, open:false, leftShade:false, rightShade:true},
+  {label:"d", dot:-3, open:true,  leftShade:false, rightShade:true},
+];
+
+// Parallelogram SVG for Q14/Q15
+function drawParallelogram(){
+  // bases 14cm, sides 10.5cm, height 10cm
+  // Draw slanted parallelogram: offset ~3 units left on top
+  return `<svg width="260" height="130" style="display:block;overflow:visible;">
+    <!-- shape: bottom-left(20,100), bottom-right(220,100), top-right(200,20), top-left(0,20) -->
+    <polygon points="20,100 220,100 200,20 0,20" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+    <!-- bottom label 14 cm -->
+    <text x="120" y="118" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">14 cm</text>
+    <!-- top label 14 cm -->
+    <text x="100" y="14" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">14 cm</text>
+    <!-- right side label 10.5 cm -->
+    <text x="228" y="65" text-anchor="start" font-size="12" fill="#1e293b">10.5 cm</text>
+    <!-- left side label 10.5 cm -->
+    <text x="-8" y="65" text-anchor="end" font-size="12" fill="#1e293b">10.5 cm</text>
+    <!-- height dashed line -->
+    <line x1="200" y1="20" x2="200" y2="100" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="208" y="62" font-size="11" fill="#64748b">h = 10 cm</text>
+    <!-- right angle mark -->
+    <polyline points="192,100 192,92 200,92" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+  </svg>`;
+}
+
+// ============================================================
+// GRADING
+// ============================================================
+function norm(s){ return String(s||"").toLowerCase().replace(/\s+/g,"").replace(/,/g,""); }
+
+function gradeData(data){
+  const results={};
+  let total=0;
+  for(const k of ALL_KEYS){
+    const raw=String(data[k]||"").trim();
+    const ans=norm(raw);
+    let correct=false;
+    for(const a of (ANSWER_KEY[k]||[]).map(norm)){
+      if(ans!==""&&ans===a){correct=true;break;}
+    }
+    const earned=correct?POINTS[k]:0;
+    results[k]={correct,earned,answer:raw};
+    total+=earned;
+  }
+
+  // Facts
+  let factsCorrect=0;
+  const factsResults={};
+  const fd=data.facts||{};
+  const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
+  for(const fk of allFK){
+    const raw=String(fd[fk]||"").trim();
+    const accepted=FACTS_ANSWERS[fk]||[];
+    const correct=accepted.some(a=>norm(raw)===norm(a));
+    factsResults[fk]={correct,answer:raw,expected:(FACTS_ANSWERS[fk]||[""])[0]};
+    if(correct)factsCorrect++;
+  }
+
+  const factsScore=Math.round((factsCorrect/24)*5*100)/100;
+  total=Math.round(total*100)/100;
+  const pct=Math.round((total/100)*100);
+  const letter=pct>=90?"A":pct>=80?"B":pct>=70?"C":pct>=60?"D":"F";
+  return{total,pct,letter,results,factsScore,factsCorrect,factsResults,
+    pu_understand:data.pu_understand||"",pu_plan:data.pu_plan||"",
+    pu_solve:data.pu_solve||"",pu_check:data.pu_check||""};
+}
+
+// ============================================================
+// BUILD FORM
+// ============================================================
+function buildForm(){
+  // Facts table
+  const tbody=document.getElementById("facts-tbody");
+  let rows="";
+  for(let i=0;i<6;i++){
+    const L=FACTS_ROWS[i], R=FACTS_ROWS2[i];
+    const li=i+1, ri=i+7;
+    rows+=`<tr>
+      <td>${L.pct}</td>
+      <td><input type="text" id="f${li}d" autocomplete="off"/></td>
+      <td><input type="text" id="f${li}f" autocomplete="off"/></td>
+      <td style="border:none;background:#fff;"></td>
+      <td>${R.pct}</td>
+      <td><input type="text" id="f${ri}d" autocomplete="off"/></td>
+      <td><input type="text" id="f${ri}f" autocomplete="off"/></td>
+    </tr>`;
+  }
+  tbody.innerHTML=rows;
+
+  // Q1–9
+  document.getElementById("questions-1-9").innerHTML=`
+
+  <div class="q-group">
+    <label class="q-label">Q1. The team's ratio of games won to games played was 5 to 6. If the team played 36 games, how many games did the team fail to win?</label>
+    <input type="text" id="q1" autocomplete="off"/>
+    <span class="q-hint-unit">${UNIT_HINT}</span>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q2. Find the a. mean, b. median, c. mode, and d. range of the following scores:<br>
+    <span style="font-weight:400;font-size:.95rem;">60, 70, 90, 70, 80, 65, 95, 80, 100, 60</span></label>
+    <div class="grid4" style="margin-top:10px;">
+      <div><label class="q-label" style="font-weight:400;font-size:.88rem;">a. Mean</label><input type="text" id="q2a" autocomplete="off"/></div>
+      <div><label class="q-label" style="font-weight:400;font-size:.88rem;">b. Median</label><input type="text" id="q2b" autocomplete="off"/></div>
+      <div><label class="q-label" style="font-weight:400;font-size:.88rem;">c. Mode</label><input type="text" id="q2c" placeholder="separate with commas" autocomplete="off"/></div>
+      <div><label class="q-label" style="font-weight:400;font-size:.88rem;">d. Range</label><input type="text" id="q2d" autocomplete="off"/></div>
+    </div>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q3. Elmo was chagrined to find that the ratio of dandelions to peonies in the garden was 11 to 4. If there were 36 peonies in the garden, how many dandelions were there?</label>
+    <input type="text" id="q3" autocomplete="off"/>
+    <span class="q-hint-unit">${UNIT_HINT}</span>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q4. Use a unit multiplier to convert 0.47 liter to milliliters. (1 liter = 1000 milliliters)</label>
+    <input type="text" id="q4" autocomplete="off"/>
+    <span class="q-hint-unit">${UNIT_HINT}</span>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q5. Choose which option correctly graphs x ≤ −3 on a number line.</label>
+    <div style="margin-top:10px;">
+      ${NL_OPTS_Q5.map(opt=>`
+        <label class="nl-opt" id="nl-opt-${opt.label}">
+          <input type="radio" name="q5" value="${opt.label}" style="width:auto;flex-shrink:0;"/>
+          <span style="font-weight:600;min-width:16px;">${opt.label}.</span>
+          ${drawNL(opt)}
+        </label>`).join("")}
+      <label class="nl-opt" id="nl-opt-e">
+        <input type="radio" name="q5" value="e" style="width:auto;flex-shrink:0;"/>
+        <span style="font-weight:600;min-width:16px;">e.</span>
+        <span style="color:#6b7280;">None of the above</span>
+      </label>
+    </div>
+    <input type="hidden" id="q5" value=""/>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q6. Collect like terms: 3xy + xy − 4x + x</label>
+    <input type="text" id="q6" autocomplete="off"/>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q7. If sound travels 2 miles in 10 seconds, how far does sound travel in 2 minutes?</label>
+    <input type="text" id="q7" autocomplete="off"/>
+    <span class="q-hint-unit">${UNIT_HINT}</span>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q8. Before the clowns arrived, only 35% of the children had happy faces. If 117 children did not have happy faces, how many children were there in all?</label>
+    <input type="text" id="q8" autocomplete="off"/>
+    <span class="q-hint-unit">${UNIT_HINT}</span>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q9. <em>Forty-five thousand dollars was raised in the charity drive. This was nine tenths of the goal.</em></label>
+    <div class="grid2" style="margin-top:8px;">
+      <div>
+        <label class="q-label" style="font-weight:400;font-size:.88rem;">a. The goal of the charity drive was how much money?</label>
+        <input type="text" id="q9a" autocomplete="off"/>
+      </div>
+      <div>
+        <label class="q-label" style="font-weight:400;font-size:.88rem;">b. The drive fell short of the goal by what percent?</label>
+        <input type="text" id="q9b" autocomplete="off"/>
+      </div>
+    </div>
+  </div>`;
+
+  // Wire Q5 radios
+  document.querySelectorAll('input[name="q5"]').forEach(r=>{
+    r.addEventListener("change",()=>{
+      document.getElementById("q5").value=r.value;
+      ["a","b","c","d","e"].forEach(v=>{
+        const lb=document.getElementById("nl-opt-"+v);
+        if(lb){lb.style.borderColor=r.value===v?"#2563eb":"#e2e8f0";lb.style.background=r.value===v?"#eff6ff":"";}
+      });
+    });
+  });
+
+  // Q10–15
+  document.getElementById("questions-10-15").innerHTML=`
+
+  <div class="q-group">
+    <label class="q-label">Q10. A certain rectangular prism is 4 inches long, 2 inches wide, and 3 inches high.</label>
+    <div style="margin:8px 0 12px;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1.5px solid #e2e8f0;">
+      <p style="font-size:.88rem;font-weight:600;color:#374151;margin-bottom:2px;">a. Sketch the figure on your paper.</p>
+      <span class="q-hint">Teacher will grade the sketch separately.</span>
+    </div>
+    <label class="q-label" style="font-weight:400;font-size:.88rem;">b. Find its volume:</label>
+    <input type="text" id="q10" autocomplete="off" style="max-width:200px;"/>
+    <span class="q-hint-unit">${UNIT_HINT}</span>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q11. Find the area of this circle. (Use 3.14 for π)</label>
+    <div class="diagram-box" style="margin-bottom:10px;">
+      <svg width="140" height="140">
+        <circle cx="70" cy="70" r="58" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+        <line x1="70" y1="70" x2="128" y2="70" stroke="#1e293b" stroke-width="1.5"/>
+        <text x="95" y="65" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">8 in.</text>
+        <text x="70" y="138" text-anchor="middle" font-size="11" fill="#6b7280">(diameter)</text>
+      </svg>
+    </div>
+    <input type="text" id="q11" autocomplete="off" style="max-width:200px;"/>
+    <span class="q-hint-unit">${UNIT_HINT}</span>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q12. Complete this table:</label>
+    <div style="overflow-x:auto;margin-top:8px;">
+    <table style="border-collapse:collapse;font-size:.92rem;">
+      <thead><tr style="background:#f1f5f9;">
+        <th style="padding:8px 18px;border:1.5px solid #e2e8f0;">Fraction</th>
+        <th style="padding:8px 18px;border:1.5px solid #e2e8f0;">Decimal</th>
+        <th style="padding:8px 18px;border:1.5px solid #e2e8f0;">Percent</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td style="padding:8px 14px;border:1.5px solid #e2e8f0;font-weight:700;text-align:center;">7/20</td>
+          <td style="padding:6px;border:1.5px solid #e2e8f0;"><input type="text" id="q12a" autocomplete="off" style="width:110px;text-align:center;"/></td>
+          <td style="padding:6px;border:1.5px solid #e2e8f0;"><input type="text" id="q12b" autocomplete="off" style="width:110px;text-align:center;"/></td>
+        </tr>
+        <tr>
+          <td style="padding:6px;border:1.5px solid #e2e8f0;"><input type="text" id="q12c" autocomplete="off" style="width:110px;text-align:center;"/></td>
+          <td style="padding:6px;border:1.5px solid #e2e8f0;"><input type="text" id="q12d" autocomplete="off" style="width:110px;text-align:center;"/></td>
+          <td style="padding:8px 14px;border:1.5px solid #e2e8f0;font-weight:700;text-align:center;">6%</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q13. Multiply and write the product in scientific notation: (2.5 × 10⁹)(1.3 × 10⁶)</label>
+    <div class="sci-wrap">
+      <input type="text" id="q13c" class="sci-coeff" autocomplete="off"/>
+      <span class="sci-label">× 10</span>
+      <input type="text" id="q13e" class="sci-exp" autocomplete="off" style="font-size:.8rem;padding:6px 4px;"/>
+      <span style="font-size:.78rem;color:#6b7280;">(enter coefficient, then the power of 10)</span>
+    </div>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q14. Name this quadrilateral and find its perimeter.</label>
+    <div class="diagram-box" style="margin-bottom:12px;">
+      ${drawParallelogram()}
+    </div>
+    <div class="grid2" style="margin-top:8px;">
+      <div>
+        <label class="q-label" style="font-weight:400;font-size:.88rem;">Name of quadrilateral</label>
+        <input type="text" id="q14" autocomplete="off"/>
+      </div>
+      <div>
+        <label class="q-label" style="font-weight:400;font-size:.88rem;">Perimeter</label>
+        <input type="text" id="q14p" autocomplete="off"/>
+        <span class="q-hint-unit">${UNIT_HINT}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q15. Find the area of the quadrilateral shown above.</label>
+    <input type="text" id="q15" autocomplete="off" style="max-width:200px;"/>
+    <span class="q-hint-unit">${UNIT_HINT}</span>
+  </div>`;
+
+  // Q16–20
+  document.getElementById("questions-16-20").innerHTML=`
+
+  <div class="q-group">
+    <label class="q-label">Q16. Solve: 15.4 = 1.4p</label>
+    <input type="text" id="q16" autocomplete="off" style="max-width:160px;"/>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q17. Solve: z + 4/9 = 1⅓</label>
+    <input type="text" id="q17" placeholder="enter as a fraction" autocomplete="off" style="max-width:160px;"/>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q18. Simplify: 3{25 − [7² − 4(11 − 4)]}</label>
+    <input type="text" id="q18" autocomplete="off" style="max-width:160px;"/>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q19. (−3) + (−4) − (−7) + (−8)</label>
+    <input type="text" id="q19" autocomplete="off" style="max-width:160px;"/>
+  </div>
+
+  <div class="q-group">
+    <label class="q-label">Q20. Use the function rule y = 2x + 1 to find the missing y values. Then graph the x, y pairs on your paper and draw a line through the points.</label>
+    <span class="q-hint" style="margin-bottom:10px;">Enter the y value for each x value below.</span>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;align-items:flex-end;">
+      <div style="text-align:center;">
+        <div style="font-weight:700;margin-bottom:4px;font-size:.9rem;">x = 0 → y =</div>
+        <input type="text" id="q20a" autocomplete="off" style="width:80px;text-align:center;"/>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-weight:700;margin-bottom:4px;font-size:.9rem;">x = 1 → y =</div>
+        <input type="text" id="q20b" autocomplete="off" style="width:80px;text-align:center;"/>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-weight:700;margin-bottom:4px;font-size:.9rem;">x = 2 → y =</div>
+        <input type="text" id="q20c" autocomplete="off" style="width:80px;text-align:center;"/>
+      </div>
+    </div>
+    <span class="q-hint" style="margin-top:8px;">Draw the graph on your paper — your teacher will grade it separately.</span>
+  </div>`;
+}
+
+// ============================================================
+// NAV & STATE
+// ============================================================
+let currentStudent="", currentDate="";
+function showPage(id){
+  ["page-start","page-form","page-result","page-teacher"].forEach(p=>{
+    document.getElementById(p).style.display=(p===id)?"block":"none";
+  });
+}
+function startTest(){
+  const name=document.getElementById("sel-name").value;
+  const date=document.getElementById("inp-date").value;
+  if(!name)return alert("Please select your name.");
+  if(!date)return alert("Please enter today's date.");
+  currentStudent=name; currentDate=date;
+  document.getElementById("form-student-name").textContent=name;
+  document.getElementById("form-test-date").textContent=date;
+  document.querySelectorAll("#page-form input[type=text],#page-form input[type=radio],#page-form textarea").forEach(el=>{
+    if(el.type==="radio")el.checked=false; else el.value="";
+  });
+  showPage("page-form"); window.scrollTo(0,0);
+}
+function showTeacherLogin(){
+  showPage("page-teacher");
+  document.getElementById("teacher-login-form").style.display="block";
+  document.getElementById("teacher-content").style.display="none";
+}
+
+// ============================================================
+// SUBMIT
+// ============================================================
+async function submitTest(){
+  if(!confirm("Are you sure you want to submit? You can only submit once."))return;
+  const btn=document.getElementById("submit-btn");
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Submitting…';
+
+  const facts={};
+  [...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT].forEach(fk=>{
+    const el=document.getElementById(fk);
+    facts[fk]=el?el.value.trim():"";
+  });
+
+  const data={name:currentStudent,date:currentDate,facts,
+    pu_understand:document.getElementById("pu_understand").value,
+    pu_plan:document.getElementById("pu_plan").value,
+    pu_solve:document.getElementById("pu_solve").value,
+    pu_check:document.getElementById("pu_check").value};
+  ALL_KEYS.forEach(k=>{const el=document.getElementById(k);data[k]=el?el.value.trim():"";});
+
+  try{
+    const r=await fetch("/api/submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
+    const result=await r.json();
+    if(result.error==="already_submitted"){alert("A submission already exists for "+currentStudent+". Please see your teacher.");btn.disabled=false;btn.textContent="Submit Test";return;}
+    if(result.error)throw new Error(result.error);
+    showResults(result);
+  }catch(e){alert("Error submitting: "+e.message);btn.disabled=false;btn.textContent="Submit Test";}
+}
+
+// ============================================================
+// RESULTS
+// ============================================================
+function showResults(g){
+  showPage("page-result"); window.scrollTo(0,0);
+  document.getElementById("result-summary").innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">
+      <div class="result-box ${g.pct>=70?'pass':'fail'}">
+        <div style="font-size:.82rem;font-weight:600;color:#475569;margin-bottom:6px;">TEST QUESTIONS Q1–Q20</div>
+        <div class="score-big">${g.total} / 100</div>
+        <div style="font-size:.95rem;font-weight:600;margin-top:4px;">${g.pct}% · ${g.letter}</div>
+      </div>
+      <div class="result-box" style="background:#eff6ff;border:2px solid #bfdbfe;">
+        <div style="font-size:.82rem;font-weight:600;color:#475569;margin-bottom:6px;">POWER UP / 10</div>
+        <div class="score-big">${g.factsScore}<span style="font-size:1.2rem;color:#94a3b8;"> + </span><span style="font-size:1.6rem;color:#94a3b8;">__</span><span style="font-size:1rem;"> / 10</span></div>
+        <div style="font-size:.78rem;color:#475569;margin-top:4px;">Facts ${g.factsScore}/5 (${g.factsCorrect}/24) · Problem Solving __/5 teacher graded</div>
+      </div>
+    </div>
+    <div style="color:#6b7280;font-size:.88rem;">${currentStudent} &nbsp;|&nbsp; ${currentDate}</div>`;
+
+  let html=`<div class="section-title">Question Review</div>`;
+  for(const k of ALL_KEYS){
+    const r=g.results[k];
+    html+=`<div class="review-item ${r.correct?'correct':'wrong'}">
+      <strong>${k.toUpperCase()}</strong>: <em>${r.answer||'(blank)'}</em>
+      ${r.correct
+        ?`<span class="pill pill-green">✓ +${r.earned} pts</span>`
+        :`<span class="pill pill-red">✗ 0 pts</span> <span style="font-size:.82rem;color:#6b7280;margin-left:6px;">✔ ${(ANSWER_KEY[k]||[""])[0]}</span>`}
+    </div>`;
+  }
+  const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
+  const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
+  html+=`<div class="section-title" style="margin-top:24px;">⚡ Power-Up Facts — ${g.factsScore}/5 pts (${g.factsCorrect}/24)</div>
+  <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+    <thead><tr style="background:#f1f5f9;">
+      <th style="padding:7px;border:1px solid #e2e8f0;">%</th>
+      <th style="padding:7px;border:1px solid #e2e8f0;">Type</th>
+      <th style="padding:7px;border:1px solid #e2e8f0;">Your Answer</th>
+      <th style="padding:7px;border:1px solid #e2e8f0;">Correct</th>
+      <th style="padding:7px;border:1px solid #e2e8f0;">✓/✗</th>
+    </tr></thead><tbody>`;
+  allFK.forEach((fk,i)=>{
+    const fr=g.factsResults[fk];if(!fr)return;
+    const rowIdx=Math.floor(i/2);const isD=(i%2===0);
+    html+=`<tr style="background:${fr.correct?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:7px;border:1px solid #e2e8f0;font-weight:700;">${allRows[rowIdx]?allRows[rowIdx].pct:''}</td>
+      <td style="padding:7px;border:1px solid #e2e8f0;">${isD?'Decimal':'Fraction'}</td>
+      <td style="padding:7px;border:1px solid #e2e8f0;text-align:center;">${fr.answer||'(blank)'}</td>
+      <td style="padding:7px;border:1px solid #e2e8f0;text-align:center;color:#16a34a;font-weight:700;">${fr.expected}</td>
+      <td style="padding:7px;border:1px solid #e2e8f0;text-align:center;">${fr.correct?'<span style="color:#16a34a;">✓</span>':'<span style="color:#dc2626;">✗</span>'}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+  document.getElementById("result-detail").innerHTML=html;
+}
+
+// ============================================================
+// TEACHER DASHBOARD
+// ============================================================
+let teacherPW="", teacherSubs=[];
+
+async function teacherLogin(){
+  const pw=document.getElementById("teacher-pw").value;
+  const btn=document.querySelector("#teacher-login-form .btn-primary");
+  btn.disabled=true;btn.textContent="Loading…";
+  try{
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"getData",password:pw})});
+    const data=await r.json();
+    if(data.error){alert("Error: "+data.error);btn.disabled=false;btn.textContent="Login";return;}
+    teacherPW=pw;
+    // Sort alphabetically by first name
+    teacherSubs=data.sort((a,b)=>a.name.localeCompare(b.name));
+    document.getElementById("teacher-login-form").style.display="none";
+    document.getElementById("teacher-content").style.display="block";
+    renderTeacher();
+  }catch(e){alert("Error: "+e.message);}
+  btn.disabled=false;btn.textContent="Login";
+}
+
+async function saveDeduct(idx,val){
+  teacherSubs[idx].unitDeductions=parseFloat(val)||0;
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveDeduction",password:teacherPW,rowIndex:teacherSubs[idx].row,deduction:parseFloat(val)||0})});}
+  catch(e){console.warn(e);}
+  renderTeacher();
+}
+async function savePsGrade(idx,val){
+  teacherSubs[idx].psGrade=parseFloat(val)||0;
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"savePsGrade",password:teacherPW,rowIndex:teacherSubs[idx].row,psGrade:parseFloat(val)||0})});}
+  catch(e){console.warn(e);}
+  renderTeacher();
+}
+async function saveSketchGrade(idx,val){
+  teacherSubs[idx].sketchGrade=parseFloat(val)||0;
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveSketchGrade",password:teacherPW,rowIndex:teacherSubs[idx].row,sketchGrade:parseFloat(val)||0})});}
+  catch(e){console.warn(e);}
+  renderTeacher();
+}
+async function saveGraphGrade(idx,val){
+  teacherSubs[idx].graphGrade=parseFloat(val)||0;
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveGraphGrade",password:teacherPW,rowIndex:teacherSubs[idx].row,graphGrade:parseFloat(val)||0})});}
+  catch(e){console.warn(e);}
+  renderTeacher();
+}
+
+function renderTeacher(){
+  const el=document.getElementById("teacher-table");
+  if(teacherSubs.length===0){el.innerHTML='<p style="color:#6b7280;padding:12px 0;">No submissions yet.</p>';return;}
+  let html=`<table style="width:100%;border-collapse:collapse;font-size:.9rem;margin-bottom:20px;">
+    <thead><tr style="background:#f1f5f9;">
+      <th style="padding:9px;text-align:left;border:1px solid #e2e8f0;">Student</th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;">Q1–Q20</th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;">Facts /5</th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:90px;">Q10 Sketch<br><span style="font-size:.72rem;font-weight:400;color:#6b7280;">/5 pts</span></th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:90px;">Q20 Graph<br><span style="font-size:.72rem;font-weight:400;color:#6b7280;">/5 pts</span></th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:110px;">Unit Deduction</th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:110px;">PS Grade /5</th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;">Actions</th>
+    </tr></thead><tbody>`;
+  teacherSubs.forEach((s,i)=>{
+    const g=s.graded;
+    const deduct=s.unitDeductions||0;
+    const adj=Math.max(0,Math.round((g.total-deduct)*100)/100);
+    const psGrade=s.psGrade!==undefined?s.psGrade:"";
+    const puTotal=psGrade!==""?(g.factsScore+parseFloat(psGrade)).toFixed(2)+"/ 10":"?/ 10";
+    html+=`<tr style="border-bottom:1px solid #e2e8f0;">
+      <td style="padding:9px;border:1px solid #e2e8f0;"><strong>${s.name}</strong><br><small style="color:#6b7280;">${s.timestamp}</small></td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;font-weight:700;">${adj}/100${deduct>0?`<br><small style="color:var(--red);">−${deduct}</small>`:""}</td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">${g.factsScore}/5<br><small style="color:#6b7280;">PU: ${puTotal}</small></td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
+        <input type="number" class="deduct-input" min="0" max="5" step="0.5" value="${s.sketchGrade!==undefined?s.sketchGrade:''}" placeholder="0–5" onchange="saveSketchGrade(${i},this.value)" title="Q10 sketch grade out of 5"/>
+      </td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
+        <input type="number" class="deduct-input" min="0" max="5" step="0.5" value="${s.graphGrade!==undefined?s.graphGrade:''}" placeholder="0–5" onchange="saveGraphGrade(${i},this.value)" title="Q20 graph grade out of 5"/>
+      </td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
+        <input type="number" class="deduct-input" min="0" max="20" step="0.5" value="${deduct}" onchange="saveDeduct(${i},this.value)"/>
+      </td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
+        <input type="number" class="deduct-input" min="0" max="5" step="0.5" value="${psGrade}" placeholder="0–5" onchange="savePsGrade(${i},this.value)"/>
+      </td>
+      <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
+        <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openAnswerGrid(${i})">📋 Answers</button>
+        <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openEmailPreview(${i})">📧 Preview</button>
+        ${s.emailSent
+          ?`<button class="btn" style="padding:5px 10px;font-size:.8rem;margin:2px;background:#15803d;color:#fff;cursor:default;" disabled>✉ Sent ✓</button>`
+          :`<button class="btn btn-green" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="sendEmail(${i})">✉ Send</button>`}
+        <button class="btn btn-red" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="confirmDel(${i})">🗑</button>
+      </td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+  el.innerHTML=html;
+}
+
+function openAnswerGrid(idx){
+  const s=teacherSubs[idx];const g=s.graded;
+  const deduct=s.unitDeductions||0;const adj=Math.max(0,Math.round((g.total-deduct)*100)/100);
+  let html=`<h3 style="margin-bottom:10px;">📋 ${s.name}</h3>
+  <p style="font-size:.85rem;color:#475569;margin-bottom:14px;">Q1–Q20: <strong>${adj}/100</strong> &nbsp;·&nbsp; Facts: <strong>${g.factsScore}/5</strong> (${g.factsCorrect}/24)</p>
+  <div style="overflow-x:auto;"><table class="ans-grid"><thead><tr>`;
+  GRID_COLS.forEach(c=>{html+=`<th>${c.l}</th>`;});
+  html+=`</tr></thead><tbody><tr>`;
+  GRID_COLS.forEach(c=>{
+    const r=g.results[c.k];const ck=(ANSWER_KEY[c.k]||[""])[0];
+    html+=`<td class="${r.correct?'ans-ok':'ans-wrong'}"><div class="ans-student">${r.answer||'—'}</div>${!r.correct?`<div class="ans-key">✔ ${ck}</div>`:''}</td>`;
+  });
+  html+=`</tr></tbody></table></div>`;
+  openModal(html,null,null);
+}
+
+function openEmailPreview(idx){
+  const s=teacherSubs[idx];const g=s.graded;
+  const deduct=s.unitDeductions||0;const adj=Math.max(0,Math.round((g.total-deduct)*100)/100);
+  const unitLine=deduct>0?`Unit deductions: -${deduct} pts\nAdjusted Score:  ${adj} / 100\n`:"";
+  let correct="",wrong="";
+  ALL_KEYS.forEach(k=>{
+    const r=g.results[k];
+    if(r.correct){correct+=`  ${k.toUpperCase()}  OK\n`;}
+    else{wrong+=`\n  ${k.toUpperCase()}: ${SOLUTIONS[k]||""}\n       Your answer: ${r.answer||"blank"}\n       Correct: ${(ANSWER_KEY[k]||[""])[0]}\n`;}
+  });
+  const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
+  const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
+  let ft="  #    PERCENT    TYPE        YOUR ANS      CORRECT\n  "+"-".repeat(56)+"\n";
+  allFK.forEach((fk,i)=>{
+    const fr=g.factsResults[fk];if(!fr)return;
+    const rowIdx=Math.floor(i/2);const isD=(i%2===0);
+    const mark=fr.correct?"OK":"X  (correct: "+fr.expected+")";
+    ft+="  "+(i+1+".").padEnd(5)+(allRows[rowIdx]?allRows[rowIdx].pct:"").padEnd(11)+(isD?"Decimal":"Fraction").padEnd(12)+(fr.answer||"blank").padEnd(14)+mark+"\n";
+  });
+  const ps=s.psGrade!==undefined&&s.psGrade!==""?s.psGrade:"__";
+  const sk=s.sketchGrade!==undefined&&s.sketchGrade!==""?s.sketchGrade:"__";
+  const gr=s.graphGrade!==undefined&&s.graphGrade!==""?s.graphGrade:"__";
+  const puT=s.psGrade!==undefined&&s.psGrade!==""?(g.factsScore+parseFloat(s.psGrade)).toFixed(2):"__";
+  const body=`Dear Parent/Guardian,\n\n${s.name} has completed Saxon Math Course 2 — Cumulative Test 17A.\n\n${"=".repeat(54)}\nTEST QUESTIONS (Q1–Q20)\n${"=".repeat(54)}\nScore: ${adj} / 100  (${g.pct}% before unit adjustments)\n${unitLine}\n  Q10 Sketch grade: ${sk} / 5  (teacher graded)\n  Q20 Graph grade:  ${gr} / 5  (teacher graded)\n\nCORRECT:\n${correct||"  (none)\n"}\nTO REVIEW:\n${wrong||"  None — perfect score!\n"}${"=".repeat(54)}\nPOWER UP (graded out of 10)\n${"=".repeat(54)}\nFacts:            ${g.factsScore} / 5  (${g.factsCorrect}/24 correct)\nProblem Solving:  ${ps} / 5  (teacher graded)\nTOTAL POWER UP:   ${g.factsScore} + ${ps} = ${puT} / 10\n\nFACTS DETAIL:\n${ft}\nPROBLEM SOLVING (teacher graded, 5 pts total):\n  Understand (1 pt):  ${g.pu_understand||"--"}\n  Plan       (1 pt):  ${g.pu_plan||"--"}\n  Solve      (2 pts): ${g.pu_solve||"--"}\n  Check      (1 pt):  ${g.pu_check||"--"}\n  Correct Answer: Full circle A=3.14(4)²=50.24 m². Chained at garage center → half circle ≈ 25 sq m.\n\n${"=".repeat(54)}\nPlease let me know if you notice any discrepancies so I can review them promptly.\n\nBest regards,\nMrs. West`;
+  const html=`<strong>Subject:</strong> Saxon Math Test 17A Results — ${s.name}<br><hr style="margin:10px 0;"/><pre style="font-size:.82rem;">${body}</pre>`;
+  openModal(html,"Copy to Clipboard",()=>{navigator.clipboard.writeText(body).then(()=>alert("Copied!")).catch(()=>alert("Copy failed."));});
+}
+
+async function sendEmail(idx){
+  const s=teacherSubs[idx];
+  if(s.psGrade===undefined||s.psGrade===""){if(!confirm("Problem Solving grade not entered yet. Send anyway?"))return;}
+  if(!confirm("Send email to parents/guardians for "+s.name+"?"))return;
+  try{
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"sendEmail",password:teacherPW,rowIndex:s.row})});
+    const data=await r.json();
+    if(data.error){alert("Error: "+data.error);return;}
+    alert("Email sent to "+s.emails.join(", ")+"!");
+    teacherSubs[idx].emailSent=true;renderTeacher();
+  }catch(e){alert("Error: "+e.message);}
+}
+
+async function confirmDel(idx){
+  if(!confirm("Delete submission for "+teacherSubs[idx].name+"? This cannot be undone."))return;
+  try{
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"deleteSubmission",password:teacherPW,rowIndex:teacherSubs[idx].row})});
+    const data=await r.json();
+    if(data.error){alert("Error: "+data.error);return;}
+    teacherSubs.splice(idx,1);renderTeacher();
+  }catch(e){alert("Error: "+e.message);}
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(html,btnLabel,btnFn){
+  document.getElementById("modal-content").innerHTML=html;
+  const btn=document.getElementById("modal-action-btn");
+  if(btnLabel&&btnFn){btn.textContent=btnLabel;btn.onclick=btnFn;btn.style.display="inline-block";}
+  else{btn.style.display="none";}
+  document.getElementById("the-modal").classList.add("open");
+}
+function closeModal(){document.getElementById("the-modal").classList.remove("open");}
+
+// ============================================================
+// INIT
+// ============================================================
+function init(){
+  document.getElementById("inp-date").value=new Date().toISOString().split("T")[0];
+  const sel=document.getElementById("sel-name");
+  ROSTER_NAMES.slice().sort().forEach(n=>{const o=document.createElement("option");o.value=o.textContent=n;sel.appendChild(o);});
+  buildForm();
+  showPage("page-start");
+}
+init();
+</script>
+</body>
+</html>
