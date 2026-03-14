@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "routes": [
-    { "src": "/api/students", "dest": "/api/students.js" },
-    { "src": "/api/submit", "dest": "/api/submit.js" },
-    { "src": "/api/teacher", "dest": "/api/teacher.js" },
-    { "src": "/test16", "dest": "/public/index.html" },
-    { "src": "/test17", "dest": "/public/test17.html" },
-    { "src": "/(.*)", "dest": "/public/index.html" }
+  "rewrites": [
+    { "source": "/api/students", "destination": "/api/students.js" },
+    { "source": "/api/submit", "destination": "/api/submit.js" },
+    { "source": "/api/teacher", "destination": "/api/teacher.js" },
+    { "source": "/test16", "destination": "/public/index.html" },
+    { "source": "/test17", "destination": "/public/test17.html" },
+    { "source": "/", "destination": "/public/index.html" }
   ]
 }
