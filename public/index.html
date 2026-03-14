@@ -763,7 +763,10 @@ function renderTeacher(){
         <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openAnswerGrid(${i})">📋 Answers</button>
         <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openEditAnswers(${i})">✏️ Edit</button>
         <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openEmailPreview(${i})">📧 Preview</button>
-        <button class="btn btn-green" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="sendEmail(${i})">✉ Send</button>
+        <${s.emailSent
+          ? `<button class="btn" style="padding:5px 10px;font-size:.8rem;margin:2px;background:#15803d;color:#fff;cursor:default;" disabled>✉ Sent ✓</button>`
+          : `<button class="btn btn-green" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="sendEmail(${i})">✉ Send</button>`
+        }
         <button class="btn btn-red"  style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="confirmDel(${i})">🗑</button>
       </td>
     </tr>`;
@@ -930,6 +933,8 @@ async function sendEmail(idx){
     const data=await r.json();
     if(data.error){alert("Error sending email: "+data.error);return;}
     alert("Email sent successfully to "+s.emails.join(", ")+"!");
+    teacherSubs[idx].emailSent = true;
+    renderTeacher();
   } catch(e){alert("Error: "+e.message);}
 }
 
