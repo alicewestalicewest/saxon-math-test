@@ -728,7 +728,7 @@ async function submitTest(){
     facts[fk]=el?el.value.trim():"";
   });
 
-  const data={name:currentStudent,date:currentDate,facts,
+  const data={name:currentStudent,date:currentDate,facts,testId:"17A",
     pu_understand:document.getElementById("pu_understand").value,
     pu_plan:document.getElementById("pu_plan").value,
     pu_solve:document.getElementById("pu_solve").value,
@@ -810,7 +810,7 @@ async function teacherLogin(){
   const btn=document.querySelector("#teacher-login-form .btn-primary");
   btn.disabled=true;btn.textContent="Loading…";
   try{
-    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"getData",password:pw})});
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"getData",password:pw,testId:"17A"})});
     const data=await r.json();
     if(data.error){alert("Error: "+data.error);btn.disabled=false;btn.textContent="Login";return;}
     teacherPW=pw;
@@ -825,25 +825,25 @@ async function teacherLogin(){
 
 async function saveDeduct(idx,val){
   teacherSubs[idx].unitDeductions=parseFloat(val)||0;
-  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveDeduction",password:teacherPW,rowIndex:teacherSubs[idx].row,deduction:parseFloat(val)||0})});}
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveDeduction",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,deduction:parseFloat(val)||0})});}
   catch(e){console.warn(e);}
   renderTeacher();
 }
 async function savePsGrade(idx,val){
   teacherSubs[idx].psGrade=parseFloat(val)||0;
-  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"savePsGrade",password:teacherPW,rowIndex:teacherSubs[idx].row,psGrade:parseFloat(val)||0})});}
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"savePsGrade",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,psGrade:parseFloat(val)||0})});}
   catch(e){console.warn(e);}
   renderTeacher();
 }
 async function saveSketchGrade(idx,val){
   teacherSubs[idx].sketchGrade=parseFloat(val)||0;
-  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveSketchGrade",password:teacherPW,rowIndex:teacherSubs[idx].row,sketchGrade:parseFloat(val)||0})});}
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveSketchGrade",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,sketchGrade:parseFloat(val)||0})});}
   catch(e){console.warn(e);}
   renderTeacher();
 }
 async function saveGraphGrade(idx,val){
   teacherSubs[idx].graphGrade=parseFloat(val)||0;
-  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveGraphGrade",password:teacherPW,rowIndex:teacherSubs[idx].row,graphGrade:parseFloat(val)||0})});}
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveGraphGrade",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,graphGrade:parseFloat(val)||0})});}
   catch(e){console.warn(e);}
   renderTeacher();
 }
@@ -886,6 +886,7 @@ function renderTeacher(){
       </td>
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
         <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openAnswerGrid(${i})">📋 Answers</button>
+        <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openEditAnswers(${i})">✏️ Edit</button>
         <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openEmailPreview(${i})">📧 Preview</button>
         ${s.emailSent
           ?`<button class="btn" style="padding:5px 10px;font-size:.8rem;margin:2px;background:#15803d;color:#fff;cursor:default;" disabled>✉ Sent ✓</button>`
@@ -912,6 +913,93 @@ function openAnswerGrid(idx){
   });
   html+=`</tr></tbody></table></div>`;
   openModal(html,null,null);
+}
+
+function openEditAnswers(idx){
+  const s=teacherSubs[idx];
+  const g=s.graded;
+
+  let html=`<h3 style="margin-bottom:6px;">✏️ Edit Answers — ${s.name}</h3>
+  <p style="font-size:.82rem;color:#6b7280;margin-bottom:14px;">Correct any answer the student entered incorrectly. The score will be recalculated when you save.</p>
+  <div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+  <thead><tr style="background:#f1f5f9;">
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:left;">Question</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Student Answer</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Correct Answer</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Override</th>
+  </tr></thead><tbody>`;
+
+  ALL_KEYS.forEach(k=>{
+    const r=g.results[k];
+    const ck=(ANSWER_KEY[k]||[""])[0];
+    html+=`<tr style="background:${r.correct?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;">${k.toUpperCase()}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">${r.answer||'—'}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;color:#16a34a;font-weight:600;">${ck}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">
+        <input type="text" id="edit_${k}" value="${r.answer||''}"
+          style="width:100px;padding:4px 6px;border:1.5px solid #d1d5db;border-radius:5px;text-align:center;font-size:.85rem;"/>
+      </td>
+    </tr>`;
+  });
+
+  html+=`</tbody></table></div>
+
+  <div style="font-weight:700;font-size:.88rem;color:#374151;margin:18px 0 6px;">⚡ Power-Up Facts</div>
+  <div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+  <thead><tr style="background:#f1f5f9;">
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;">%</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;">Type</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Student</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Correct</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Override</th>
+  </tr></thead><tbody>`;
+
+  const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
+  const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
+  allFK.forEach((fk,i)=>{
+    const fr=g.factsResults[fk];if(!fr)return;
+    const rowIdx=Math.floor(i/2);const isD=(i%2===0);
+    html+=`<tr style="background:${fr.correct?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;">${allRows[rowIdx]?allRows[rowIdx].pct:''}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;">${isD?'Decimal':'Fraction'}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">${fr.answer||'—'}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;color:#16a34a;font-weight:600;">${fr.expected}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">
+        <input type="text" id="edit_${fk}" value="${fr.answer||''}"
+          style="width:90px;padding:4px 6px;border:1.5px solid #d1d5db;border-radius:5px;text-align:center;font-size:.85rem;"/>
+      </td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+
+  openModal(html,"💾 Save & Regrade",()=>saveEditedAnswers(idx));
+}
+
+async function saveEditedAnswers(idx){
+  const s=teacherSubs[idx];
+  ALL_KEYS.forEach(k=>{
+    const el=document.getElementById("edit_"+k);
+    if(el) s.data[k]=el.value.trim();
+  });
+  const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
+  allFK.forEach(fk=>{
+    const el=document.getElementById("edit_"+fk);
+    if(el){if(!s.data.facts)s.data.facts={};s.data.facts[fk]=el.value.trim();}
+  });
+  const newGraded=gradeData(s.data);
+  s.graded=newGraded;
+  try{
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"updateAnswers",testId:"17A",password:teacherPW,rowIndex:s.row,data:s.data})});
+    const result=await r.json();
+    if(result.error){alert("Error saving: "+result.error);return;}
+  }catch(e){alert("Error: "+e.message);return;}
+  closeModal();
+  renderTeacher();
+  alert("Answers updated and score recalculated!");
 }
 
 function openEmailPreview(idx){
@@ -947,7 +1035,7 @@ async function sendEmail(idx){
   if(s.psGrade===undefined||s.psGrade===""){if(!confirm("Problem Solving grade not entered yet. Send anyway?"))return;}
   if(!confirm("Send email to parents/guardians for "+s.name+"?"))return;
   try{
-    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"sendEmail",password:teacherPW,rowIndex:s.row})});
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"sendEmail",testId:"17A",password:teacherPW,rowIndex:s.row})});
     const data=await r.json();
     if(data.error){alert("Error: "+data.error);return;}
     alert("Email sent to "+s.emails.join(", ")+"!");
@@ -958,7 +1046,7 @@ async function sendEmail(idx){
 async function confirmDel(idx){
   if(!confirm("Delete submission for "+teacherSubs[idx].name+"? This cannot be undone."))return;
   try{
-    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"deleteSubmission",password:teacherPW,rowIndex:teacherSubs[idx].row})});
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"deleteSubmission",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row})});
     const data=await r.json();
     if(data.error){alert("Error: "+data.error);return;}
     teacherSubs.splice(idx,1);renderTeacher();
