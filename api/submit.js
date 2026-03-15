@@ -1,6 +1,11 @@
 // api/submit.js
 const { gradeData } = require("../lib/data");
 const { getRows, appendRow, ensureSheetExists, DEFAULT_SHEET } = require("../lib/sheets");
+const { google } = require("googleapis");
+const { Readable } = require("stream");
+
+const DRIVE_FOLDER_ID = "1sxkX6Ns-QMWf7libhtZBpUrdCgs9wwxw";
+const SCHOOLOGY_SHEET_ID = "16cyjzU8pg6XZdMlHSkmA2sf_ds-l0aegi47-ZXIDDZw";
 
 const FACTS_KEYS_17 = [
   "f1d","f1f","f2d","f2f","f3d","f3f","f4d","f4f","f5d","f5f","f6d","f6f",
@@ -13,6 +18,94 @@ const FACTS_LABELS_17 = [
   "33.3%_dec","33.3%_frac","20%_dec","20%_frac","75%_dec","75%_frac",
   "66.7%_dec","66.7%_frac","1%_dec","1%_frac","250%_dec","250%_frac"
 ];
+
+function getAuth() {
+  const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  if (!key) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY env var not set");
+  const credentials = JSON.parse(key);
+  return new google.auth.GoogleAuth({
+    credentials,
+    scopes: [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive"
+    ],
+  });
+}
+
+async function uploadPhotoToDrive(base64DataUrl, studentName, testId) {
+  try {
+    const auth = getAuth();
+    const drive = google.drive({ version: "v3", auth });
+
+    // Strip the data URL prefix (e.g. "data:image/jpeg;base64,")
+    const matches = base64DataUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (!matches) throw new Error("Invalid photo data");
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+    const buffer = Buffer.from(base64Data, "base64");
+
+    const ext = mimeType.includes("png") ? "png" : "jpg";
+    const fileName = `${studentName}_Test${testId}.${ext}`;
+
+    const stream = new Readable();
+    stream.push(buffer);
+    stream.push(null);
+
+    const file = await drive.files.create({
+      requestBody: {
+        name: fileName,
+        parents: [DRIVE_FOLDER_ID],
+        mimeType,
+      },
+      media: { mimeType, body: stream },
+      fields: "id,name,webViewLink",
+    });
+
+    return file.data.webViewLink || "";
+  } catch (err) {
+    console.error("Photo upload failed:", err.message);
+    return "";
+  }
+}
+
+async function updateSchoologyGrades(studentName, pct, factsScore, psGrade, testTabName) {
+  try {
+    const auth = getAuth();
+    const sheets = google.sheets({ version: "v4", auth });
+
+    // Ensure tab exists
+    const meta = await sheets.spreadsheets.get({ spreadsheetId: SCHOOLOGY_SHEET_ID });
+    const tabExists = meta.data.sheets.some(s => s.properties.title === testTabName);
+    if (!tabExists) {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SCHOOLOGY_SHEET_ID,
+        requestBody: { requests: [{ addSheet: { properties: { title: testTabName } } }] }
+      });
+      // Add header row
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SCHOOLOGY_SHEET_ID,
+        range: `${testTabName}!A1`,
+        valueInputOption: "RAW",
+        insertDataOption: "INSERT_ROWS",
+        requestBody: { values: [["Name", "Total %", "Power Up Grade"]] }
+      });
+    }
+
+    const puTotal = (psGrade !== "" && psGrade !== undefined)
+      ? Math.round((parseFloat(factsScore) + parseFloat(psGrade)) * 100) / 100
+      : "";
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SCHOOLOGY_SHEET_ID,
+      range: `${testTabName}!A1`,
+      valueInputOption: "RAW",
+      insertDataOption: "INSERT_ROWS",
+      requestBody: { values: [[studentName, pct + "%", puTotal !== "" ? puTotal + "/10" : "Pending"]] }
+    });
+  } catch (err) {
+    console.error("Schoology grade update failed:", err.message);
+  }
+}
 
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -38,7 +131,15 @@ module.exports = async (req, res) => {
       }
     }
 
-    const graded = gradeData(data);
+    const graded = testId === "17A"
+      ? (data.graded || { total: data.total || 0, pct: data.pct || 0, letter: data.letter || "?", factsScore: data.factsScore || 0 })
+      : gradeData(data);
+
+    // Upload photo to Drive if provided
+    let photoLink = "";
+    if (testId === "17A" && data.photo) {
+      photoLink = await uploadPhotoToDrive(data.photo, data.name, testId);
+    }
 
     if (testId === "17A") {
       if (rows.length === 0) {
@@ -57,7 +158,7 @@ module.exports = async (req, res) => {
           "FactsScore",
           ...FACTS_LABELS_17,
           "PU_Understand","PU_Plan","PU_Solve","PU_Check",
-          "UnitDeductions","PsGrade","SketchGrade","GraphGrade"
+          "UnitDeductions","PsGrade","SketchGrade","GraphGrade","PhotoLink"
         ], sheetName);
       }
 
@@ -79,11 +180,14 @@ module.exports = async (req, res) => {
         graded.factsScore,
         ...factsRow,
         data.pu_understand||"", data.pu_plan||"", data.pu_solve||"", data.pu_check||"",
-        0, "", "", ""
+        0, "", "", "",
+        photoLink
       ], sheetName);
 
+      // Update Schoology Grades sheet
+      await updateSchoologyGrades(data.name, graded.pct, graded.factsScore, "", "Test17A");
+
     } else {
-      // Test 16A — original unchanged
       if (rows.length === 0) {
         await appendRow([
           "Timestamp","Name","Date","Score","Percent","Letter",
@@ -113,7 +217,7 @@ module.exports = async (req, res) => {
       ], sheetName);
     }
 
-    return res.json(graded);
+    return res.json({ ...graded, photoLink });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });
