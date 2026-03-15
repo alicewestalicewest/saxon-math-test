@@ -1,119 +1,121 @@
-// lib/sheets.js — Google Sheets read/write via Service Account
-const { google } = require("googleapis");
+// api/submit.js
+const { gradeData } = require("../lib/data");
+const { getRows, appendRow, ensureSheetExists, DEFAULT_SHEET } = require("../lib/sheets");
 
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID || "1y0eSeuB0ovkWd5H2l6IL2Tqg3WzzUVpPgXnJKy4KTLA";
+const FACTS_KEYS_17 = [
+  "f1d","f1f","f2d","f2f","f3d","f3f","f4d","f4f","f5d","f5f","f6d","f6f",
+  "f7d","f7f","f8d","f8f","f9d","f9f","f10d","f10f","f11d","f11f","f12d","f12f"
+];
 
-// Default sheet for Test 16A
-const DEFAULT_SHEET = "Responses";
+const FACTS_LABELS_17 = [
+  "10%_dec","10%_frac","90%_dec","90%_frac","5%_dec","5%_frac",
+  "12.5%_dec","12.5%_frac","50%_dec","50%_frac","25%_dec","25%_frac",
+  "33.3%_dec","33.3%_frac","20%_dec","20%_frac","75%_dec","75%_frac",
+  "66.7%_dec","66.7%_frac","1%_dec","1%_frac","250%_dec","250%_frac"
+];
 
-function getAuth() {
-  const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  if (!key) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY env var not set");
-  const credentials = JSON.parse(key);
-  return new google.auth.GoogleAuth({
-    credentials,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-  });
-}
+module.exports = async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-async function getSheet() {
-  const auth = getAuth();
-  const sheets = google.sheets({ version: "v4", auth });
-  return { sheets, spreadsheetId: SPREADSHEET_ID };
-}
+  try {
+    const data = req.body;
+    const testId = data.testId || "16A";
+    const sheetName = testId === "17A" ? "Responses17A" : DEFAULT_SHEET;
 
-// Ensure a sheet tab exists, create it if not
-async function ensureSheetExists(sheetName) {
-  const { sheets, spreadsheetId } = await getSheet();
-  const meta = await sheets.spreadsheets.get({ spreadsheetId });
-  const exists = meta.data.sheets.some(s => s.properties.title === sheetName);
-  if (!exists) {
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
-      requestBody: {
-        requests: [{ addSheet: { properties: { title: sheetName } } }]
-      }
-    });
-  }
-}
+    await ensureSheetExists(sheetName);
 
-async function getRows(sheetName = DEFAULT_SHEET) {
-  const { sheets, spreadsheetId } = await getSheet();
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: `${sheetName}!A:BZ`,
-  });
-  return res.data.values || [];
-}
-
-async function appendRow(row, sheetName = DEFAULT_SHEET) {
-  const { sheets, spreadsheetId } = await getSheet();
-  await sheets.spreadsheets.values.append({
-    spreadsheetId,
-    range: `${sheetName}!A1`,
-    valueInputOption: "RAW",
-    insertDataOption: "INSERT_ROWS",
-    requestBody: { values: [row] },
-  });
-}
-
-async function updateCell(rowNum, colNum, value, sheetName = DEFAULT_SHEET) {
-  const { sheets, spreadsheetId } = await getSheet();
-  let col = "";
-  let n = colNum;
-  while (n > 0) {
-    const rem = (n - 1) % 26;
-    col = String.fromCharCode(65 + rem) + col;
-    n = Math.floor((n - 1) / 26);
-  }
-  const range = `${sheetName}!${col}${rowNum}`;
-  await sheets.spreadsheets.values.update({
-    spreadsheetId,
-    range,
-    valueInputOption: "RAW",
-    requestBody: { values: [[value]] },
-  });
-}
-
-async function deleteRow(rowIndex, sheetName = DEFAULT_SHEET) {
-  const { sheets, spreadsheetId } = await getSheet();
-  const meta = await sheets.spreadsheets.get({ spreadsheetId });
-  const sheet = meta.data.sheets.find(s => s.properties.title === sheetName);
-  if (!sheet) throw new Error("Sheet not found: " + sheetName);
-  const sheetId = sheet.properties.sheetId;
-  await sheets.spreadsheets.batchUpdate({
-    spreadsheetId,
-    requestBody: {
-      requests: [{
-        deleteDimension: {
-          range: {
-            sheetId,
-            dimension: "ROWS",
-            startIndex: rowIndex,
-            endIndex: rowIndex + 1,
-          }
+    // Block duplicate submissions
+    const rows = await getRows(sheetName);
+    if (rows.length > 1) {
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i][1] === data.name) {
+          return res.status(409).json({ error: "already_submitted" });
         }
-      }]
+      }
     }
-  });
-}
 
-async function updateRow(rowNum, startCol, values, sheetName = DEFAULT_SHEET) {
-  const { sheets, spreadsheetId } = await getSheet();
-  let col = "";
-  let n = startCol;
-  while (n > 0) {
-    const rem = (n - 1) % 26;
-    col = String.fromCharCode(65 + rem) + col;
-    n = Math.floor((n - 1) / 26);
+    const graded = gradeData(data);
+
+    if (testId === "17A") {
+      if (rows.length === 0) {
+        await appendRow([
+          "Timestamp","Name","Date","Score","Percent","Letter",
+          "Q1",
+          "Q2a","Q2b","Q2c","Q2d",
+          "Q3","Q4","Q5","Q6","Q7","Q8",
+          "Q9a","Q9b",
+          "Q10_volume","Q11",
+          "Q12a","Q12b","Q12c","Q12d",
+          "Q13_coeff","Q13_exp",
+          "Q14_name","Q14_perim","Q15",
+          "Q16","Q17","Q18","Q19",
+          "Q20a","Q20b","Q20c",
+          "FactsScore",
+          ...FACTS_LABELS_17,
+          "PU_Understand","PU_Plan","PU_Solve","PU_Check",
+          "UnitDeductions","PsGrade","SketchGrade","GraphGrade"
+        ], sheetName);
+      }
+
+      const factsRow = FACTS_KEYS_17.map(k => (data.facts||{})[k]||"");
+
+      await appendRow([
+        new Date().toLocaleString(), data.name, data.date,
+        graded.total, graded.pct+"%", graded.letter,
+        data.q1,
+        data.q2a, data.q2b, data.q2c, data.q2d,
+        data.q3, data.q4, data.q5, data.q6, data.q7, data.q8,
+        data.q9a, data.q9b,
+        data.q10, data.q11,
+        data.q12a, data.q12b, data.q12c, data.q12d,
+        data.q13c, data.q13e,
+        data.q14, data.q14p, data.q15,
+        data.q16, data.q17, data.q18, data.q19,
+        data.q20a, data.q20b, data.q20c,
+        graded.factsScore,
+        ...factsRow,
+        data.pu_understand||"", data.pu_plan||"", data.pu_solve||"", data.pu_check||"",
+        0, "", "", ""
+      ], sheetName);
+
+    } else {
+      // Test 16A — original unchanged
+      if (rows.length === 0) {
+        await appendRow([
+          "Timestamp","Name","Date","Score","Percent","Letter",
+          "Q1","Q2","Q3","Q4","Q5","Q6",
+          "Q7ax","Q7ay","Q7bx","Q7by","Q7cx","Q7cy",
+          "Q8","Q9",
+          "Q10a","Q10b","Q10c","Q10d",
+          "Q11a","Q11b","Q11c","Q11d",
+          "Q12","Q13","Q14","Q15","Q16","Q17","Q18","Q19","Q20",
+          "FactsScore","FactsAnswers",
+          "PU_Understand","PU_Plan","PU_Solve","PU_Check",
+          "UnitDeductions","PsGrade"
+        ], sheetName);
+      }
+      await appendRow([
+        new Date().toLocaleString(), data.name, data.date,
+        graded.total, graded.pct+"%", graded.letter,
+        data.q1, data.q2, data.q3, data.q4, data.q5, data.q6,
+        data.q7ax, data.q7ay, data.q7bx, data.q7by, data.q7cx, data.q7cy,
+        data.q8, data.q9,
+        data.q10a, data.q10b, data.q10c, data.q10d,
+        data.q11a, data.q11b, data.q11c, data.q11d,
+        data.q12, data.q13, data.q14, data.q15, data.q16, data.q17, data.q18, data.q19, data.q20,
+        graded.factsScore, JSON.stringify(data.facts||{}),
+        data.pu_understand||"", data.pu_plan||"", data.pu_solve||"", data.pu_check||"",
+        0, ""
+      ], sheetName);
+    }
+
+    return res.json(graded);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
-  const range = `${sheetName}!${col}${rowNum}`;
-  await sheets.spreadsheets.values.update({
-    spreadsheetId,
-    range,
-    valueInputOption: "RAW",
-    requestBody: { values: [values] },
-  });
-}
-
-module.exports = { getRows, appendRow, updateCell, updateRow, deleteRow, ensureSheetExists, DEFAULT_SHEET };
+};
