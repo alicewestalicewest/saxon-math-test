@@ -151,6 +151,16 @@
   </div>
   <div class="card" style="text-align:center;">
     <p style="margin-bottom:14px;color:#475569;">Review your answers before submitting. You can only submit once.</p>
+    <div style="margin-bottom:18px;padding:16px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0;">
+      <label class="q-label" style="margin-bottom:8px;">📸 Attach a photo of your paper test (optional)</label>
+      <span class="q-hint" style="margin-bottom:10px;">Take a photo of your completed paper test and attach it here. Your teacher will be able to see it.</span>
+      <input type="file" id="photo-upload" accept="image/*" capture="environment"
+        style="display:block;margin:10px auto;max-width:340px;font-size:.9rem;"/>
+      <div id="photo-preview" style="margin-top:10px;display:none;">
+        <img id="photo-img" style="max-width:100%;max-height:300px;border-radius:8px;border:1.5px solid #e2e8f0;"/>
+        <p style="font-size:.8rem;color:#16a34a;margin-top:6px;">✓ Photo attached</p>
+      </div>
+    </div>
     <button class="btn btn-primary" id="submit-btn" onclick="submitTest()">Submit Test</button>
   </div>
 </div>
@@ -266,7 +276,41 @@ const ALL_KEYS = [
   "q16","q17","q18","q19","q20a","q20b","q20c"
 ];
 
-const SOLUTIONS = {
+const QUESTION_TEXT = {
+  q1:   "The team's ratio of games won to games played was 5 to 6. If the team played 36 games, how many games did the team fail to win?",
+  q2a:  "Find the mean of: 60, 70, 90, 70, 80, 65, 95, 80, 100, 60",
+  q2b:  "Find the median of: 60, 70, 90, 70, 80, 65, 95, 80, 100, 60",
+  q2c:  "Find the mode of: 60, 70, 90, 70, 80, 65, 95, 80, 100, 60",
+  q2d:  "Find the range of: 60, 70, 90, 70, 80, 65, 95, 80, 100, 60",
+  q3:   "The ratio of dandelions to peonies was 11 to 4. If there were 36 peonies, how many dandelions?",
+  q4:   "Use a unit multiplier to convert 0.47 liter to milliliters.",
+  q5:   "Graph x ≤ −3 on a number line.",
+  q6:   "Collect like terms: 3xy + xy − 4x + x",
+  q7:   "If sound travels 2 miles in 10 seconds, how far does it travel in 2 minutes?",
+  q8:   "35% of children had happy faces. 117 did not have happy faces. How many children total?",
+  q9a:  "$45,000 raised was 9/10 of the goal. What was the goal?",
+  q9b:  "$45,000 raised was 9/10 of the goal. The drive fell short by what percent?",
+  q10:  "Rectangular prism: 4 in × 2 in × 3 in. Find the volume.",
+  q11:  "Find the area of a circle with diameter 8 in. (Use 3.14 for π)",
+  q12a: "Write 7/20 as a decimal.",
+  q12b: "Write 7/20 as a percent.",
+  q12c: "Write 6% as a fraction in simplest form.",
+  q12d: "Write 6% as a decimal.",
+  q13c: "Multiply (2.5 × 10⁹)(1.3 × 10⁶) — enter the coefficient.",
+  q13e: "Multiply (2.5 × 10⁹)(1.3 × 10⁶) — enter the exponent (power of 10).",
+  q14:  "Name the quadrilateral shown (bases 14 cm, sides 10.5 cm).",
+  q14p: "Find the perimeter of the quadrilateral (bases 14 cm, sides 10.5 cm).",
+  q15:  "Find the area of the quadrilateral (base 14 cm, height 10 cm).",
+  q16:  "Solve: 15.4 = 1.4p",
+  q17:  "Solve: z + 4/9 = 1⅓",
+  q18:  "Simplify: 3{25 − [7² − 4(11 − 4)]}",
+  q19:  "(−3) + (−4) − (−7) + (−8)",
+  q20a: "y = 2x + 1. Find y when x = 0.",
+  q20b: "y = 2x + 1. Find y when x = 1.",
+  q20c: "y = 2x + 1. Find y when x = 2."
+};
+
+
   q1:   "Ratio won:failed:played = 5:1:6 → 1/6 = f/36 → f = 6 games",
   q2a:  "(60+60+65+70+70+80+80+90+95+100) ÷ 10 = 770 ÷ 10 = 77",
   q2b:  "Sorted: 60,60,65,70,70,80,80,90,95,100 → median = (70+80)/2 = 75",
@@ -555,6 +599,13 @@ function buildForm(){
     });
   });
 
+  // Wire Q14 radios
+  document.querySelectorAll('input[name="q14"]').forEach(r=>{
+    r.addEventListener("change",()=>{
+      document.getElementById("q14").value=r.value;
+    });
+  });
+
   // Q10–15
   document.getElementById("questions-10-15").innerHTML=`
 
@@ -613,9 +664,9 @@ function buildForm(){
     <div class="sci-wrap">
       <input type="text" id="q13c" class="sci-coeff" autocomplete="off"/>
       <span class="sci-label">× 10</span>
-      <input type="text" id="q13e" class="sci-exp" autocomplete="off" style="font-size:.8rem;padding:6px 4px;"/>
-      <span style="font-size:.78rem;color:#6b7280;">(enter coefficient, then the power of 10)</span>
+      <input type="text" id="q13e" autocomplete="off" style="width:40px !important;padding:3px 4px !important;font-size:.78rem;text-align:center;vertical-align:super;border:1.5px solid #d1d5db;border-radius:5px;margin-bottom:8px;"/>
     </div>
+    <span class="q-hint">Enter the coefficient first, then the power of 10 in the small box</span>
   </div>
 
   <div class="q-group">
@@ -625,11 +676,19 @@ function buildForm(){
     </div>
     <div class="grid2" style="margin-top:8px;">
       <div>
-        <label class="q-label" style="font-weight:400;font-size:.88rem;">Name of quadrilateral</label>
-        <input type="text" id="q14" autocomplete="off"/>
+        <label class="q-label" style="font-weight:400;font-size:.88rem;">a. This quadrilateral is a:</label>
+        <div style="margin-top:6px;">
+          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="parallelogram" style="width:auto;margin-right:8px;"/>Parallelogram</label>
+          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="rectangle" style="width:auto;margin-right:8px;"/>Rectangle</label>
+          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="rhombus" style="width:auto;margin-right:8px;"/>Rhombus</label>
+          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="trapezoid" style="width:auto;margin-right:8px;"/>Trapezoid</label>
+          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="square" style="width:auto;margin-right:8px;"/>Square</label>
+          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="kite" style="width:auto;margin-right:8px;"/>Kite</label>
+        </div>
+        <input type="hidden" id="q14" value=""/>
       </div>
       <div>
-        <label class="q-label" style="font-weight:400;font-size:.88rem;">Perimeter</label>
+        <label class="q-label" style="font-weight:400;font-size:.88rem;">b. Perimeter</label>
         <input type="text" id="q14p" autocomplete="off"/>
         <span class="q-hint-unit">${UNIT_HINT}</span>
       </div>
@@ -687,6 +746,28 @@ function buildForm(){
 }
 
 // ============================================================
+// PHOTO UPLOAD
+// ============================================================
+let photoBase64 = null;
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  const inp = document.getElementById("photo-upload");
+  if(inp){
+    inp.addEventListener("change", ()=>{
+      const file = inp.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        photoBase64 = e.target.result; // full data URL
+        document.getElementById("photo-img").src = photoBase64;
+        document.getElementById("photo-preview").style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+});
+
+// ============================================================
 // NAV & STATE
 // ============================================================
 let currentStudent="", currentDate="";
@@ -734,6 +815,12 @@ async function submitTest(){
     pu_solve:document.getElementById("pu_solve").value,
     pu_check:document.getElementById("pu_check").value};
   ALL_KEYS.forEach(k=>{const el=document.getElementById(k);data[k]=el?el.value.trim():"";});
+
+  // Grade on frontend and include result so server doesn't need to re-grade
+  const graded = gradeData(data);
+  data.graded = { total: graded.total, pct: graded.pct, letter: graded.letter, factsScore: graded.factsScore };
+  data.total = graded.total; data.pct = graded.pct; data.letter = graded.letter; data.factsScore = graded.factsScore;
+  if(photoBase64) data.photo = photoBase64;
 
   try{
     const r=await fetch("/api/submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
@@ -912,6 +999,12 @@ function openAnswerGrid(idx){
     html+=`<td class="${r.correct?'ans-ok':'ans-wrong'}"><div class="ans-student">${r.answer||'—'}</div>${!r.correct?`<div class="ans-key">✔ ${ck}</div>`:''}</td>`;
   });
   html+=`</tr></tbody></table></div>`;
+  if(s.photo){
+    html+=`<div style="margin-top:18px;">
+      <div style="font-weight:700;font-size:.88rem;color:#374151;margin-bottom:8px;">📸 Student's Paper Test</div>
+      <a href="${s.photo}" target="_blank" class="btn btn-gray" style="display:inline-block;margin-bottom:10px;">🔗 View Photo in Google Drive</a>
+    </div>`;
+  }
   openModal(html,null,null);
 }
 
@@ -1010,7 +1103,7 @@ function openEmailPreview(idx){
   ALL_KEYS.forEach(k=>{
     const r=g.results[k];
     if(r.correct){correct+=`  ${k.toUpperCase()}  OK\n`;}
-    else{wrong+=`\n  ${k.toUpperCase()}: ${SOLUTIONS[k]||""}\n       Your answer: ${r.answer||"blank"}\n       Correct: ${(ANSWER_KEY[k]||[""])[0]}\n`;}
+    else{wrong+=`\n  ${k.toUpperCase()}: ${QUESTION_TEXT[k]||""}\n       Your answer: ${r.answer||"blank"}\n       Correct: ${(ANSWER_KEY[k]||[""])[0]}\n       Solution: ${SOLUTIONS[k]||""}\n`;}
   });
   const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
   const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
