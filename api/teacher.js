@@ -2,6 +2,48 @@
 const { TEACHER_PASSWORD, gradeData, getEmails, buildEmailBody } = require("../lib/data");
 const { getRows, deleteRow, updateCell, updateRow, DEFAULT_SHEET } = require("../lib/sheets");
 const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
+
+const SCHOOLOGY_SHEET_ID = "16cyjzU8pg6XZdMlHSkmA2sf_ds-l0aegi47-ZXIDDZw";
+
+function getAuth() {
+  const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  if (!key) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY env var not set");
+  const credentials = JSON.parse(key);
+  return new google.auth.GoogleAuth({
+    credentials,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
+}
+
+async function updateSchoologyPowerUp(studentName, factsScore, psGrade, testTabName) {
+  try {
+    const auth = getAuth();
+    const sheets = google.sheets({ version: "v4", auth });
+    const puTotal = Math.round((parseFloat(factsScore) + parseFloat(psGrade)) * 100) / 100;
+
+    // Find the student's row in the Schoology sheet
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SCHOOLOGY_SHEET_ID,
+      range: `${testTabName}!A:C`
+    });
+    const rows = res.data.values || [];
+    let rowNum = null;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === studentName) { rowNum = i + 1; break; }
+    }
+    if (!rowNum) return; // student not found
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SCHOOLOGY_SHEET_ID,
+      range: `${testTabName}!C${rowNum}`,
+      valueInputOption: "RAW",
+      requestBody: { values: [[puTotal + "/10"]] }
+    });
+  } catch (err) {
+    console.error("Schoology PU update failed:", err.message);
+  }
+}
 
 // ── TEST 17A column layout (0-based) ─────────────────────────
 // 0:Timestamp 1:Name 2:Date 3:Score 4:Percent 5:Letter
@@ -85,10 +127,10 @@ function parseRows17(rows) {
     const psGrade     = r[67]!==undefined&&r[67]!==""?parseFloat(r[67]):"";
     const sketchGrade = r[68]!==undefined&&r[68]!==""?parseFloat(r[68]):"";
     const graphGrade  = r[69]!==undefined&&r[69]!==""?parseFloat(r[69]):"";
-    results.push({
+    const photo       = r[70] || "";    results.push({
       row:i, timestamp:r[0]?r[0].toString():"",
       name:r[1], date:r[2], emails, data, graded,
-      unitDeductions, psGrade, sketchGrade, graphGrade
+      unitDeductions, psGrade, sketchGrade, graphGrade, photo
     });
   }
   return results;
@@ -124,6 +166,15 @@ module.exports = async (req, res) => {
     if (action === "savePsGrade") {
       const { psGrade } = req.body;
       await updateCell(rowIndex+1, COL.ps, psGrade, sheetName);
+      // Update Schoology Grades sheet with final Power Up
+      if (is17) {
+        const rows = await getRows(sheetName);
+        const subs = parseRows17(rows);
+        const sub = subs.find(s => s.row === rowIndex);
+        if (sub) {
+          await updateSchoologyPowerUp(sub.name, sub.graded.factsScore, psGrade, "Test17A");
+        }
+      }
       return res.json({ ok:true });
     }
 
