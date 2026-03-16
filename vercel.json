@@ -5,7 +5,7 @@
     { "src": "/api/submit", "dest": "/api/submit.js" },
     { "src": "/api/teacher", "dest": "/api/teacher.js" },
     { "src": "/api/upload-photo", "dest": "/api/upload-photo.js" },
-    { "src": "/test16", "dest": "/public/index16.html" },
+    { "src": "/test16", "dest": "/public/test16.html" },
     { "src": "/(.*)", "dest": "/public/$1" }
   ]
 }
