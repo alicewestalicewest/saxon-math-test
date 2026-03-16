@@ -32,48 +32,36 @@ function getAuth() {
   });
 }
 
-async function uploadPhotoToDrive(base64DataUrl, studentName, testId) {
+async function uploadPhotoToDrive(base64DataUrl, studentName, testId, photoNum) {
   try {
     const auth = getAuth();
     const drive = google.drive({ version: "v3", auth });
-
-    // Strip the data URL prefix (e.g. "data:image/jpeg;base64,")
     const matches = base64DataUrl.match(/^data:([^;]+);base64,(.+)$/);
     if (!matches) throw new Error("Invalid photo data");
     const mimeType = matches[1];
     const base64Data = matches[2];
     const buffer = Buffer.from(base64Data, "base64");
-
     const ext = mimeType.includes("png") ? "png" : "jpg";
-    const fileName = `${studentName}_Test${testId}.${ext}`;
-
+    const fileName = `${studentName}_Test${testId}_${photoNum}.${ext}`;
     const stream = new Readable();
     stream.push(buffer);
     stream.push(null);
-
     const file = await drive.files.create({
-      requestBody: {
-        name: fileName,
-        parents: [DRIVE_FOLDER_ID],
-        mimeType,
-      },
+      requestBody: { name: fileName, parents: [DRIVE_FOLDER_ID], mimeType },
       media: { mimeType, body: stream },
-      fields: "id,name,webViewLink",
+      fields: "id,webViewLink",
     });
-
     return file.data.webViewLink || "";
   } catch (err) {
-    console.error("Photo upload failed:", err.message);
+    console.error(`Photo ${photoNum} upload failed:`, err.message);
     return "";
   }
 }
 
-async function updateSchoologyGrades(studentName, pct, factsScore, psGrade, testTabName) {
+async function updateSchoologyGrades(studentName, pct, factsScore, testTabName) {
   try {
     const auth = getAuth();
     const sheets = google.sheets({ version: "v4", auth });
-
-    // Ensure tab exists
     const meta = await sheets.spreadsheets.get({ spreadsheetId: SCHOOLOGY_SHEET_ID });
     const tabExists = meta.data.sheets.some(s => s.properties.title === testTabName);
     if (!tabExists) {
@@ -81,7 +69,6 @@ async function updateSchoologyGrades(studentName, pct, factsScore, psGrade, test
         spreadsheetId: SCHOOLOGY_SHEET_ID,
         requestBody: { requests: [{ addSheet: { properties: { title: testTabName } } }] }
       });
-      // Add header row
       await sheets.spreadsheets.values.append({
         spreadsheetId: SCHOOLOGY_SHEET_ID,
         range: `${testTabName}!A1`,
@@ -90,17 +77,12 @@ async function updateSchoologyGrades(studentName, pct, factsScore, psGrade, test
         requestBody: { values: [["Name", "Total %", "Power Up Grade"]] }
       });
     }
-
-    const puTotal = (psGrade !== "" && psGrade !== undefined)
-      ? Math.round((parseFloat(factsScore) + parseFloat(psGrade)) * 100) / 100
-      : "";
-
     await sheets.spreadsheets.values.append({
       spreadsheetId: SCHOOLOGY_SHEET_ID,
       range: `${testTabName}!A1`,
       valueInputOption: "RAW",
       insertDataOption: "INSERT_ROWS",
-      requestBody: { values: [[studentName, pct + "%", puTotal !== "" ? puTotal + "/10" : "Pending"]] }
+      requestBody: { values: [[studentName, pct + "%", "Pending"]] }
     });
   } catch (err) {
     console.error("Schoology grade update failed:", err.message);
@@ -121,7 +103,6 @@ module.exports = async (req, res) => {
 
     await ensureSheetExists(sheetName);
 
-    // Block duplicate submissions
     const rows = await getRows(sheetName);
     if (rows.length > 1) {
       for (let i = 1; i < rows.length; i++) {
@@ -135,21 +116,23 @@ module.exports = async (req, res) => {
       ? (data.graded || { total: data.total || 0, pct: data.pct || 0, letter: data.letter || "?", factsScore: data.factsScore || 0 })
       : gradeData(data);
 
-    // Upload photo to Drive if provided
-    let photoLink = "";
-    if (testId === "17A" && data.photo) {
-      photoLink = await uploadPhotoToDrive(data.photo, data.name, testId);
+    // Upload up to 6 photos to Drive
+    let photoLinks = [];
+    if (testId === "17A" && data.photos && data.photos.length > 0) {
+      const uploads = data.photos.slice(0, 6).map((p, i) =>
+        uploadPhotoToDrive(p, data.name, testId, i + 1)
+      );
+      photoLinks = await Promise.all(uploads);
+      photoLinks = photoLinks.filter(Boolean);
     }
 
     if (testId === "17A") {
       if (rows.length === 0) {
         await appendRow([
           "Timestamp","Name","Date","Score","Percent","Letter",
-          "Q1",
-          "Q2a","Q2b","Q2c","Q2d",
+          "Q1","Q2a","Q2b","Q2c","Q2d",
           "Q3","Q4","Q5","Q6","Q7","Q8",
-          "Q9a","Q9b",
-          "Q10_volume","Q11",
+          "Q9a","Q9b","Q10_volume","Q11",
           "Q12a","Q12b","Q12c","Q12d",
           "Q13_coeff","Q13_exp",
           "Q14_name","Q14_perim","Q15",
@@ -158,7 +141,7 @@ module.exports = async (req, res) => {
           "FactsScore",
           ...FACTS_LABELS_17,
           "PU_Understand","PU_Plan","PU_Solve","PU_Check",
-          "UnitDeductions","PsGrade","SketchGrade","GraphGrade","PhotoLink"
+          "UnitDeductions","PsGrade","SketchGrade","GraphGrade","PhotoLinks"
         ], sheetName);
       }
 
@@ -181,11 +164,10 @@ module.exports = async (req, res) => {
         ...factsRow,
         data.pu_understand||"", data.pu_plan||"", data.pu_solve||"", data.pu_check||"",
         0, "", "", "",
-        photoLink
+        JSON.stringify(photoLinks)
       ], sheetName);
 
-      // Update Schoology Grades sheet
-      await updateSchoologyGrades(data.name, graded.pct, graded.factsScore, "", "Test17A");
+      await updateSchoologyGrades(data.name, graded.pct, graded.factsScore, "Test17A");
 
     } else {
       if (rows.length === 0) {
@@ -217,7 +199,7 @@ module.exports = async (req, res) => {
       ], sheetName);
     }
 
-    return res.json({ ...graded, photoLink });
+    return res.json({ ok: true });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });
