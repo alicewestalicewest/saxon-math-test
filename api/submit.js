@@ -2,8 +2,10 @@
 const { gradeData } = require("../lib/data");
 const { getRows, appendRow, ensureSheetExists, DEFAULT_SHEET } = require("../lib/sheets");
 const { google } = require("googleapis");
+const nodemailer = require("nodemailer");
 
 const SCHOOLOGY_SHEET_ID = "16cyjzU8pg6XZdMlHSkmA2sf_ds-l0aegi47-ZXIDDZw";
+const TEACHER_EMAIL = "awest1@stratfordschools.com";
 
 const FACTS_KEYS_17 = [
   "f1d","f1f","f2d","f2f","f3d","f3f","f4d","f4f","f5d","f5f","f6d","f6f",
@@ -27,12 +29,50 @@ function getAuth() {
   });
 }
 
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+  });
+}
+
+async function emailPhotosToTeacher(studentName, photos) {
+  try {
+    const attachments = photos.map((dataUrl, i) => {
+      const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (!matches) return null;
+      const mimeType = matches[1];
+      const ext = mimeType.includes("png") ? "png" : "jpg";
+      return {
+        filename: `${studentName}_Test17A_Photo${i+1}.${ext}`,
+        content: matches[2],
+        encoding: "base64",
+        contentType: mimeType
+      };
+    }).filter(Boolean);
+
+    if (attachments.length === 0) return;
+
+    const transporter = getTransporter();
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: TEACHER_EMAIL,
+      subject: `Test 17A Photos — ${studentName}`,
+      text: `${studentName} has submitted Test 17A and attached ${attachments.length} photo(s) of their paper test.`,
+      attachments
+    });
+  } catch (err) {
+    console.error("Photo email failed:", err.message);
+  }
+}
+
 async function updateSchoologyGrades(studentName, pct, testTabName) {
   try {
     const auth = getAuth();
     const sheets = google.sheets({ version: "v4", auth });
 
-    // Ensure tab exists with header
     const meta = await sheets.spreadsheets.get({ spreadsheetId: SCHOOLOGY_SHEET_ID });
     const tabExists = meta.data.sheets.some(s => s.properties.title === testTabName);
     if (!tabExists) {
@@ -42,7 +82,6 @@ async function updateSchoologyGrades(studentName, pct, testTabName) {
       });
     }
 
-    // Check if header row exists
     const existing = await sheets.spreadsheets.values.get({
       spreadsheetId: SCHOOLOGY_SHEET_ID,
       range: `${testTabName}!A1:C1`
@@ -57,7 +96,6 @@ async function updateSchoologyGrades(studentName, pct, testTabName) {
       });
     }
 
-    // Append student row
     await sheets.spreadsheets.values.append({
       spreadsheetId: SCHOOLOGY_SHEET_ID,
       range: `${testTabName}!A:C`,
@@ -84,7 +122,6 @@ module.exports = async (req, res) => {
 
     await ensureSheetExists(sheetName);
 
-    // Block duplicate submissions
     const rows = await getRows(sheetName);
     if (rows.length > 1) {
       for (let i = 1; i < rows.length; i++) {
@@ -98,10 +135,13 @@ module.exports = async (req, res) => {
       ? (data.graded || { total: data.total || 0, pct: data.pct || 0, letter: data.letter || "?", factsScore: data.factsScore || 0 })
       : gradeData(data);
 
-    // photoLinks are Drive URLs uploaded separately before submit
-    const photoLinks = Array.isArray(data.photoLinks) ? data.photoLinks : [];
-
     if (testId === "17A") {
+      // Email photos to teacher if provided
+      const photos = Array.isArray(data.photos) ? data.photos.slice(0, 6) : [];
+      if (photos.length > 0) {
+        await emailPhotosToTeacher(data.name, photos);
+      }
+
       if (rows.length === 0) {
         await appendRow([
           "Timestamp","Name","Date","Score","Percent","Letter",
@@ -116,7 +156,8 @@ module.exports = async (req, res) => {
           "FactsScore",
           ...FACTS_LABELS_17,
           "PU_Understand","PU_Plan","PU_Solve","PU_Check",
-          "UnitDeductions","PsGrade","SketchGrade","GraphGrade","PhotoLinks"
+          "UnitDeductions","PsGrade","SketchGrade","GraphGrade",
+          "PhotosEmailed"
         ], sheetName);
       }
 
@@ -139,7 +180,7 @@ module.exports = async (req, res) => {
         ...factsRow,
         data.pu_understand||"", data.pu_plan||"", data.pu_solve||"", data.pu_check||"",
         0, "", "", "",
-        JSON.stringify(photoLinks)
+        photos.length > 0 ? `Yes (${photos.length} photo${photos.length>1?'s':''})` : "No"
       ], sheetName);
 
       await updateSchoologyGrades(data.name, graded.pct, "Test17A");
