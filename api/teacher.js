@@ -121,16 +121,30 @@ function parseRows17(rows) {
       pu_understand:r[62]||"", pu_plan:r[63]||"",
       pu_solve:r[64]||"", pu_check:r[65]||""
     };
-    const graded = gradeData(data);
+    // Return stored score from sheet — grading happens on frontend
+    const storedTotal = parseFloat(r[3]||0)||0;
+    const storedPct   = parseInt((r[4]||"0").replace("%",""))||0;
+    const storedLetter= r[5]||"?";
+    const storedFacts = parseFloat(r[37]||0)||0;
+    // Build a minimal graded object from stored values — frontend will re-grade fully
+    const graded = {
+      total: storedTotal, pct: storedPct, letter: storedLetter,
+      factsScore: storedFacts, factsCorrect: 0, results: {}, factsResults: {},
+      pu_understand: data.pu_understand, pu_plan: data.pu_plan,
+      pu_solve: data.pu_solve, pu_check: data.pu_check
+    };
     const emails = getEmails(r[1]);
     const unitDeductions = parseFloat(r[66]||0)||0;
     const psGrade     = r[67]!==undefined&&r[67]!==""?parseFloat(r[67]):"";
     const sketchGrade = r[68]!==undefined&&r[68]!==""?parseFloat(r[68]):"";
     const graphGrade  = r[69]!==undefined&&r[69]!==""?parseFloat(r[69]):"";
-    const photo       = r[70] || "";    results.push({
+    const photo       = r[70] || "";
+    let photos = [];
+    try { photos = JSON.parse(photo); if(!Array.isArray(photos)) photos = photo ? [photo] : []; } catch(e){ photos = photo ? [photo] : []; }
+    results.push({
       row:i, timestamp:r[0]?r[0].toString():"",
       name:r[1], date:r[2], emails, data, graded,
-      unitDeductions, psGrade, sketchGrade, graphGrade, photo
+      unitDeductions, psGrade, sketchGrade, graphGrade, photos
     });
   }
   return results;
