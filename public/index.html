@@ -754,24 +754,47 @@ function buildForm(){
 // ============================================================
 let photoBase64Array = [];
 
+function compressImage(dataUrl, maxWidth=1200, quality=0.7) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let w = img.width, h = img.height;
+      if(w > maxWidth){ h = Math.round(h * maxWidth / w); w = maxWidth; }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
 document.addEventListener("DOMContentLoaded", ()=>{
   const inp = document.getElementById("photo-upload");
   if(inp){
-    inp.addEventListener("change", ()=>{
+    inp.addEventListener("change", async ()=>{
       const files = Array.from(inp.files).slice(0, 6);
       photoBase64Array = [];
       const preview = document.getElementById("photo-preview");
+      preview.innerHTML = '<span style="font-size:.82rem;color:#6b7280;">Compressing photos…</span>';
+      const compressed = await Promise.all(files.map(file => {
+        return new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = async e => {
+            const small = await compressImage(e.target.result);
+            resolve(small);
+          };
+          reader.readAsDataURL(file);
+        });
+      }));
+      photoBase64Array = compressed;
       preview.innerHTML = "";
-      files.forEach((file, idx) => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          photoBase64Array[idx] = e.target.result;
-          const img = document.createElement("img");
-          img.src = e.target.result;
-          img.style.cssText = "width:120px;height:90px;object-fit:cover;border-radius:6px;border:1.5px solid #e2e8f0;";
-          preview.appendChild(img);
-        };
-        reader.readAsDataURL(file);
+      compressed.forEach(dataUrl => {
+        const img = document.createElement("img");
+        img.src = dataUrl;
+        img.style.cssText = "width:120px;height:90px;object-fit:cover;border-radius:6px;border:1.5px solid #e2e8f0;";
+        preview.appendChild(img);
       });
       if(files.length > 6) alert("Maximum 6 photos allowed. Only the first 6 will be uploaded.");
     });
