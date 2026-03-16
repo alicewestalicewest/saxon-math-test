@@ -204,6 +204,27 @@ module.exports = async (req, res) => {
       return res.json({ ok:true });
     }
 
+    if (action === "sendPhotosEmail") {
+      const { photos, name, emails } = req.body;
+      if (!emails || emails.length === 0)
+        return res.status(400).json({ error: "No email on file for " + name });
+      const photoLines = photos.map((link, i) => `Photo ${i+1}: ${link}`).join("\n");
+      const body = `Dear Parent/Guardian,\n\nPlease find the photo(s) of ${name}'s Saxon Math Test 17A paper below:\n\n${photoLines}\n\nBest regards,\nMrs. West`;
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || "587"),
+        secure: process.env.SMTP_SECURE === "true",
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+      });
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: emails.join(","),
+        subject: `Saxon Math Test 17A — ${name}'s Paper Photos`,
+        text: body
+      });
+      return res.json({ ok: true });
+    }
+
     if (action === "sendEmail") {
       const rows = await getRows(sheetName);
       const subs = is17 ? parseRows17(rows) : parseRows16(rows);
