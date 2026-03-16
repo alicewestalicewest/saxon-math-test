@@ -2,9 +2,7 @@
 const { gradeData } = require("../lib/data");
 const { getRows, appendRow, ensureSheetExists, DEFAULT_SHEET } = require("../lib/sheets");
 const { google } = require("googleapis");
-const { Readable } = require("stream");
 
-const DRIVE_FOLDER_ID = "1sxkX6Ns-QMWf7libhtZBpUrdCgs9wwxw";
 const SCHOOLOGY_SHEET_ID = "16cyjzU8pg6XZdMlHSkmA2sf_ds-l0aegi47-ZXIDDZw";
 
 const FACTS_KEYS_17 = [
@@ -25,40 +23,11 @@ function getAuth() {
   const credentials = JSON.parse(key);
   return new google.auth.GoogleAuth({
     credentials,
-    scopes: [
-      "https://www.googleapis.com/auth/spreadsheets",
-      "https://www.googleapis.com/auth/drive"
-    ],
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 }
 
-async function uploadPhotoToDrive(base64DataUrl, studentName, testId, photoNum) {
-  try {
-    const auth = getAuth();
-    const drive = google.drive({ version: "v3", auth });
-    const matches = base64DataUrl.match(/^data:([^;]+);base64,(.+)$/);
-    if (!matches) throw new Error("Invalid photo data");
-    const mimeType = matches[1];
-    const base64Data = matches[2];
-    const buffer = Buffer.from(base64Data, "base64");
-    const ext = mimeType.includes("png") ? "png" : "jpg";
-    const fileName = `${studentName}_Test${testId}_${photoNum}.${ext}`;
-    const stream = new Readable();
-    stream.push(buffer);
-    stream.push(null);
-    const file = await drive.files.create({
-      requestBody: { name: fileName, parents: [DRIVE_FOLDER_ID], mimeType },
-      media: { mimeType, body: stream },
-      fields: "id,webViewLink",
-    });
-    return file.data.webViewLink || "";
-  } catch (err) {
-    console.error(`Photo ${photoNum} upload failed:`, err.message);
-    return "";
-  }
-}
-
-async function updateSchoologyGrades(studentName, pct, factsScore, testTabName) {
+async function updateSchoologyGrades(studentName, pct, testTabName) {
   try {
     const auth = getAuth();
     const sheets = google.sheets({ version: "v4", auth });
@@ -116,15 +85,8 @@ module.exports = async (req, res) => {
       ? (data.graded || { total: data.total || 0, pct: data.pct || 0, letter: data.letter || "?", factsScore: data.factsScore || 0 })
       : gradeData(data);
 
-    // Upload up to 6 photos to Drive
-    let photoLinks = [];
-    if (testId === "17A" && data.photos && data.photos.length > 0) {
-      const uploads = data.photos.slice(0, 6).map((p, i) =>
-        uploadPhotoToDrive(p, data.name, testId, i + 1)
-      );
-      photoLinks = await Promise.all(uploads);
-      photoLinks = photoLinks.filter(Boolean);
-    }
+    // photoLinks are already Drive URLs — uploaded separately before submit
+    const photoLinks = Array.isArray(data.photoLinks) ? data.photoLinks : [];
 
     if (testId === "17A") {
       if (rows.length === 0) {
@@ -167,7 +129,7 @@ module.exports = async (req, res) => {
         JSON.stringify(photoLinks)
       ], sheetName);
 
-      await updateSchoologyGrades(data.name, graded.pct, graded.factsScore, "Test17A");
+      await updateSchoologyGrades(data.name, graded.pct, "Test17A");
 
     } else {
       if (rows.length === 0) {
