@@ -213,6 +213,8 @@ module.exports = async (req, res) => {
         data.pu_understand||"", data.pu_plan||"", data.pu_solve||"", data.pu_check||"",
         0, ""
       ], sheetName);
+
+      await updateSchoologyGrades(data.name, graded.pct, "Test16A");
     }
 
     return res.json({ ok: true });
