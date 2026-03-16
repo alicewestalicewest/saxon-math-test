@@ -256,13 +256,13 @@ const POINTS = {
   q2a:1.25, q2b:1.25, q2c:1.25, q2d:1.25,
   q3:5, q4:5, q5:5, q6:5, q7:5, q8:5,
   q9a:2.5, q9b:2.5,
-  q10:5, q11:5,
+  q10:2.5, q11:5,
   q12a:1.25, q12b:1.25, q12c:1.25, q12d:1.25,
   q13c:2.5, q13e:2.5,
   q14:2.5, q14p:2.5,
   q15:5,
   q16:5, q17:5, q18:5, q19:5,
-  q20a:1.67, q20b:1.67, q20c:1.66
+  q20a:0.84, q20b:0.83, q20c:0.83
 };
 
 const ALL_KEYS = [
@@ -608,10 +608,7 @@ function buildForm(){
 
   <div class="q-group">
     <label class="q-label">Q10. A certain rectangular prism is 4 inches long, 2 inches wide, and 3 inches high.</label>
-    <div style="margin:8px 0 12px;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1.5px solid #e2e8f0;">
-      <p style="font-size:.88rem;font-weight:600;color:#374151;margin-bottom:2px;">a. Sketch the figure on your paper.</p>
-      <span class="q-hint">Teacher will grade the sketch separately.</span>
-    </div>
+    <p style="font-size:.88rem;color:#475569;margin:6px 0 12px;">a. Sketch the figure on your paper. <span style="color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:4px;padding:2px 6px;font-size:.8rem;">2.5 pts — teacher graded</span><br>b. Find its volume. <span style="color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:4px;padding:2px 6px;font-size:.8rem;">2.5 pts — auto graded</span></p>
     <label class="q-label" style="font-weight:400;font-size:.88rem;">b. Find its volume:</label>
     <input type="text" id="q10" autocomplete="off" style="max-width:200px;"/>
     <span class="q-hint-unit">${UNIT_HINT}</span>
@@ -723,7 +720,7 @@ function buildForm(){
 
   <div class="q-group">
     <label class="q-label">Q20. Use the function rule y = 2x + 1 to find the missing y values. Then graph the x, y pairs on your paper and draw a line through the points.</label>
-    <span class="q-hint" style="margin-bottom:10px;">Enter the y value for each x value below.</span>
+    <span class="q-hint" style="margin-bottom:10px;">Enter the y value for each x. <span style="color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:4px;padding:2px 6px;font-size:.78rem;">y-values: 2.5 pts auto graded · graph: 2.5 pts teacher graded</span></span>
     <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:6px;align-items:flex-end;">
       <div style="text-align:center;">
         <div style="font-weight:700;margin-bottom:4px;font-size:.9rem;">x = 0 → y =</div>
@@ -968,8 +965,8 @@ function renderTeacher(){
       <th style="padding:9px;text-align:left;border:1px solid #e2e8f0;">Student</th>
       <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;">Q1–Q20</th>
       <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;">Facts /5</th>
-      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:90px;">Q10 Sketch<br><span style="font-size:.72rem;font-weight:400;color:#6b7280;">/5 pts</span></th>
-      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:90px;">Q20 Graph<br><span style="font-size:.72rem;font-weight:400;color:#6b7280;">/5 pts</span></th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:90px;">Q10 Sketch<br><span style="font-size:.72rem;font-weight:400;color:#6b7280;">/2.5 pts</span></th>
+      <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:90px;">Q20 Graph<br><span style="font-size:.72rem;font-weight:400;color:#6b7280;">/2.5 pts</span></th>
       <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:110px;">Unit Deduction</th>
       <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:110px;">PS Grade /5</th>
       <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;">Actions</th>
@@ -985,10 +982,10 @@ function renderTeacher(){
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;font-weight:700;">${adj}/100${deduct>0?`<br><small style="color:var(--red);">−${deduct}</small>`:""}</td>
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">${g.factsScore}/5<br><small style="color:#6b7280;">PU: ${puTotal}</small></td>
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
-        <input type="number" class="deduct-input" min="0" max="5" step="0.5" value="${s.sketchGrade!==undefined?s.sketchGrade:''}" placeholder="0–5" onchange="saveSketchGrade(${i},this.value)" title="Q10 sketch grade out of 5"/>
+        <input type="number" class="deduct-input" min="0" max="2.5" step="0.5" value="${s.sketchGrade!==undefined?s.sketchGrade:''}" placeholder="0–2.5" onchange="saveSketchGrade(${i},this.value)" title="Q10 sketch grade out of 2.5"/>
       </td>
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
-        <input type="number" class="deduct-input" min="0" max="5" step="0.5" value="${s.graphGrade!==undefined?s.graphGrade:''}" placeholder="0–5" onchange="saveGraphGrade(${i},this.value)" title="Q20 graph grade out of 5"/>
+        <input type="number" class="deduct-input" min="0" max="2.5" step="0.5" value="${s.graphGrade!==undefined?s.graphGrade:''}" placeholder="0–2.5" onchange="saveGraphGrade(${i},this.value)" title="Q20 graph grade out of 2.5"/>
       </td>
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
         <input type="number" class="deduct-input" min="0" max="20" step="0.5" value="${deduct}" onchange="saveDeduct(${i},this.value)"/>
@@ -1024,13 +1021,53 @@ function openAnswerGrid(idx){
     html+=`<td class="${r.correct?'ans-ok':'ans-wrong'}"><div class="ans-student">${r.answer||'—'}</div>${!r.correct?`<div class="ans-key">✔ ${ck}</div>`:''}</td>`;
   });
   html+=`</tr></tbody></table></div>`;
+
+  // Facts table
+  const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
+  const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
+  html+=`<div style="font-weight:700;font-size:.88rem;color:#374151;margin:18px 0 6px;">⚡ Power-Up Facts (${g.factsCorrect}/24 correct — ${g.factsScore}/5 pts)</div>
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+  <thead><tr style="background:#f1f5f9;">
+    <th style="padding:6px 8px;border:1px solid #e2e8f0;">%</th>
+    <th style="padding:6px 8px;border:1px solid #e2e8f0;">Type</th>
+    <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;">Student</th>
+    <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;">Correct</th>
+    <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;">✓/✗</th>
+  </tr></thead><tbody>`;
+  allFK.forEach((fk,i)=>{
+    const fr=g.factsResults[fk];if(!fr)return;
+    const rowIdx=Math.floor(i/2);const isD=(i%2===0);
+    html+=`<tr style="background:${fr.correct?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:5px 8px;border:1px solid #e2e8f0;font-weight:700;">${allRows[rowIdx]?allRows[rowIdx].pct:''}</td>
+      <td style="padding:5px 8px;border:1px solid #e2e8f0;">${isD?'Decimal':'Fraction'}</td>
+      <td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:center;font-weight:700;">${fr.answer||'—'}</td>
+      <td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:center;color:#16a34a;font-weight:700;">${fr.expected}</td>
+      <td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:center;">${fr.correct?'<span style="color:#16a34a;">✓</span>':'<span style="color:#dc2626;">✗</span>'}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+
+  // Problem Solving
+  html+=`<div style="font-weight:700;font-size:.88rem;color:#374151;margin:16px 0 6px;">Problem Solving (teacher graded)</div>
+  <table style="width:100%;font-size:.85rem;border-collapse:collapse;border:1px solid #e2e8f0;">
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;width:100px;">Understand</td><td style="padding:6px 10px;">${g.pu_understand||'—'}</td></tr>
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">Plan</td><td style="padding:6px 10px;">${g.pu_plan||'—'}</td></tr>
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">Solve</td><td style="padding:6px 10px;">${g.pu_solve||'—'}</td></tr>
+    <tr><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">Check</td><td style="padding:6px 10px;">${g.pu_check||'—'}</td></tr>
+  </table>`;
+
+  // Photos
   if(s.photos && s.photos.length > 0){
     html+=`<div style="margin-top:18px;">
       <div style="font-weight:700;font-size:.88rem;color:#374151;margin-bottom:8px;">📸 Student's Paper Test (${s.photos.length} photo${s.photos.length>1?'s':''})</div>
-      ${s.photos.map((link,i)=>`<a href="${link}" target="_blank" class="btn btn-gray" style="display:inline-block;margin:4px;">🔗 Photo ${i+1}</a>`).join("")}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        ${s.photos.map((link,pi)=>`<a href="${link}" target="_blank" class="btn btn-gray" style="padding:5px 12px;font-size:.82rem;">🔗 Photo ${pi+1}</a>`).join("")}
+      </div>
     </div>`;
   }
-  openModal(html,null,null);
+
+  openModal(html, s.photos && s.photos.length > 0 ? "📧 Send Photos to Parents" : null,
+    s.photos && s.photos.length > 0 ? ()=>sendPhotosEmail(idx) : null);
 }
 
 function openEditAnswers(idx){
@@ -1162,6 +1199,20 @@ async function sendEmail(idx){
     if(data.error){alert("Error: "+data.error);return;}
     alert("Email sent to "+s.emails.join(", ")+"!");
     teacherSubs[idx].emailSent=true;renderTeacher();
+  }catch(e){alert("Error: "+e.message);}
+}
+
+async function sendPhotosEmail(idx){
+  const s=teacherSubs[idx];
+  if(!s.photos||s.photos.length===0){alert("No photos on file for "+s.name);return;}
+  if(!confirm("Send photo links to parents/guardians for "+s.name+"?"))return;
+  try{
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"sendPhotosEmail",testId:"17A",password:teacherPW,rowIndex:s.row,photos:s.photos,name:s.name,emails:s.emails})});
+    const data=await r.json();
+    if(data.error){alert("Error: "+data.error);return;}
+    alert("Photo links sent to "+s.emails.join(", ")+"!");
+    closeModal();
   }catch(e){alert("Error: "+e.message);}
 }
 
