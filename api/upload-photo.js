@@ -3,6 +3,7 @@ const { google } = require("googleapis");
 const { Readable } = require("stream");
 
 const DRIVE_FOLDER_ID = "1sxkX6Ns-QMWf7libhtZBpUrdCgs9wwxw";
+const OWNER_EMAIL = "alicewest.alicewest@gmail.com";
 
 function getAuth() {
   const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
@@ -10,7 +11,10 @@ function getAuth() {
   const credentials = JSON.parse(key);
   return new google.auth.GoogleAuth({
     credentials,
-    scopes: ["https://www.googleapis.com/auth/drive"],
+    scopes: [
+      "https://www.googleapis.com/auth/drive",
+      "https://www.googleapis.com/auth/drive.file"
+    ],
   });
 }
 
@@ -36,15 +40,40 @@ module.exports = async (req, res) => {
     const auth = getAuth();
     const drive = google.drive({ version: "v3", auth });
 
+    // Upload the file
     const stream = new Readable();
     stream.push(buffer);
     stream.push(null);
 
     const file = await drive.files.create({
-      requestBody: { name: fileName, parents: [DRIVE_FOLDER_ID], mimeType },
+      requestBody: {
+        name: fileName,
+        parents: [DRIVE_FOLDER_ID],
+        mimeType,
+      },
       media: { mimeType, body: stream },
       fields: "id,webViewLink",
     });
+
+    const fileId = file.data.id;
+
+    // Transfer ownership to personal Google account
+    // This works around the service account storage quota issue
+    try {
+      await drive.permissions.create({
+        fileId,
+        transferOwnership: true,
+        requestBody: {
+          role: "owner",
+          type: "user",
+          emailAddress: OWNER_EMAIL,
+        },
+      });
+    } catch(permErr) {
+      // Ownership transfer may fail in some configurations
+      // but the file is still uploaded and accessible
+      console.warn("Ownership transfer failed (non-fatal):", permErr.message);
+    }
 
     return res.json({ ok: true, link: file.data.webViewLink || "" });
   } catch (err) {
