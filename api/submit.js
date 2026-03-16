@@ -31,6 +31,8 @@ async function updateSchoologyGrades(studentName, pct, testTabName) {
   try {
     const auth = getAuth();
     const sheets = google.sheets({ version: "v4", auth });
+
+    // Ensure tab exists with header
     const meta = await sheets.spreadsheets.get({ spreadsheetId: SCHOOLOGY_SHEET_ID });
     const tabExists = meta.data.sheets.some(s => s.properties.title === testTabName);
     if (!tabExists) {
@@ -38,17 +40,27 @@ async function updateSchoologyGrades(studentName, pct, testTabName) {
         spreadsheetId: SCHOOLOGY_SHEET_ID,
         requestBody: { requests: [{ addSheet: { properties: { title: testTabName } } }] }
       });
-      await sheets.spreadsheets.values.append({
+    }
+
+    // Check if header row exists
+    const existing = await sheets.spreadsheets.values.get({
+      spreadsheetId: SCHOOLOGY_SHEET_ID,
+      range: `${testTabName}!A1:C1`
+    });
+    const hasHeader = existing.data.values && existing.data.values[0] && existing.data.values[0][0] === "Name";
+    if (!hasHeader) {
+      await sheets.spreadsheets.values.update({
         spreadsheetId: SCHOOLOGY_SHEET_ID,
         range: `${testTabName}!A1`,
         valueInputOption: "RAW",
-        insertDataOption: "INSERT_ROWS",
         requestBody: { values: [["Name", "Total %", "Power Up Grade"]] }
       });
     }
+
+    // Append student row
     await sheets.spreadsheets.values.append({
       spreadsheetId: SCHOOLOGY_SHEET_ID,
-      range: `${testTabName}!A1`,
+      range: `${testTabName}!A:C`,
       valueInputOption: "RAW",
       insertDataOption: "INSERT_ROWS",
       requestBody: { values: [[studentName, pct + "%", "Pending"]] }
@@ -72,6 +84,7 @@ module.exports = async (req, res) => {
 
     await ensureSheetExists(sheetName);
 
+    // Block duplicate submissions
     const rows = await getRows(sheetName);
     if (rows.length > 1) {
       for (let i = 1; i < rows.length; i++) {
@@ -85,7 +98,7 @@ module.exports = async (req, res) => {
       ? (data.graded || { total: data.total || 0, pct: data.pct || 0, letter: data.letter || "?", factsScore: data.factsScore || 0 })
       : gradeData(data);
 
-    // photoLinks are already Drive URLs — uploaded separately before submit
+    // photoLinks are Drive URLs uploaded separately before submit
     const photoLinks = Array.isArray(data.photoLinks) ? data.photoLinks : [];
 
     if (testId === "17A") {
