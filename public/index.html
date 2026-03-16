@@ -203,6 +203,7 @@
 // ============================================================
 // ROSTER
 // ============================================================
+const TEACHER_EMAIL_DISPLAY = "awest1@stratfordschools.com";
 const ROSTER_NAMES = [
   "Aarohi Agrawal","Alisha Agrawal","Ananya Arvind","Elizabeth Cai","Eloisa Keojampa",
   "Eric Huang","Erin Yuen","Evan Chang","Jennifer Chen","Jenny Montgomery",
@@ -831,26 +832,9 @@ async function submitTest(){
   data.graded = { total: graded.total, pct: graded.pct, letter: graded.letter, factsScore: graded.factsScore };
   data.total = graded.total; data.pct = graded.pct; data.letter = graded.letter; data.factsScore = graded.factsScore;
 
-  // Upload photos to Drive one at a time, then submit only the links
-  let photoLinks = [];
-  let photoErrors = [];
-  if(photoBase64Array.length > 0){
-    btn.innerHTML='<span class="spinner"></span>Uploading photos…';
-    for(let i=0;i<photoBase64Array.length;i++){
-      try{
-        const pr=await fetch("/api/upload-photo",{
-          method:"POST",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({photo:photoBase64Array[i],studentName:currentStudent,testId:"17A",photoNum:i+1})
-        });
-        const presult=await pr.json();
-        if(presult.link) photoLinks.push(presult.link);
-        else photoErrors.push("Photo "+(i+1)+": "+(presult.error||"no link returned"));
-      }catch(e){photoErrors.push("Photo "+(i+1)+": "+e.message);}
-    }
-    if(photoErrors.length > 0) console.warn("Photo upload issues:", photoErrors);
-    btn.innerHTML='<span class="spinner"></span>Submitting…';
-  }
-  data.photoLinks = photoLinks;
+  // Include photos directly in payload — server will email them to teacher
+  if(photoBase64Array.length > 0) data.photos = photoBase64Array;
+  data.photoLinks = [];
 
   try{
     const r=await fetch("/api/submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
@@ -1069,17 +1053,13 @@ function openAnswerGrid(idx){
   </table>`;
 
   // Photos
-  if(s.photos && s.photos.length > 0){
-    html+=`<div style="margin-top:18px;">
-      <div style="font-weight:700;font-size:.88rem;color:#374151;margin-bottom:8px;">📸 Student's Paper Test (${s.photos.length} photo${s.photos.length>1?'s':''})</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-        ${s.photos.map((link,pi)=>`<a href="${link}" target="_blank" class="btn btn-gray" style="padding:5px 12px;font-size:.82rem;">🔗 Photo ${pi+1}</a>`).join("")}
-      </div>
+  if(s.photosEmailed){
+    html+=`<div style="margin-top:18px;padding:10px 14px;background:#f0fdf4;border-radius:8px;border:1.5px solid #86efac;">
+      <span style="font-size:.88rem;font-weight:600;color:#16a34a;">📸 ${s.photosEmailed} — emailed to ${TEACHER_EMAIL_DISPLAY}</span>
     </div>`;
   }
 
-  openModal(html, s.photos && s.photos.length > 0 ? "📧 Send Photos to Parents" : null,
-    s.photos && s.photos.length > 0 ? ()=>sendPhotosEmail(idx) : null);
+  openModal(html, null, null);
 }
 
 function openEditAnswers(idx){
