@@ -827,7 +827,8 @@ async function submitTest(){
     const result=await r.json();
     if(result.error==="already_submitted"){alert("A submission already exists for "+currentStudent+". Please see your teacher.");btn.disabled=false;btn.textContent="Submit Test";return;}
     if(result.error)throw new Error(result.error);
-    showResults(result);
+    // Use frontend graded result — server only stores data, doesn't re-grade 17A
+    showResults(graded);
   }catch(e){alert("Error submitting: "+e.message);btn.disabled=false;btn.textContent="Submit Test";}
 }
 
