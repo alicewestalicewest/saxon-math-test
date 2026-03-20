@@ -1,5 +1,5 @@
 // api/teacher.js
-const { TEACHER_PASSWORD, gradeData, getEmails, buildEmailBody } = require("../lib/data");
+const { TEACHER_PASSWORD, gradeData, buildEmailBody, buildEmailBody17, getEmails } = require("../lib/data");
 const { getRows, deleteRow, updateCell, updateRow, DEFAULT_SHEET } = require("../lib/sheets");
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
@@ -22,7 +22,6 @@ async function updateSchoologyPowerUp(studentName, factsScore, psGrade, testTabN
     const sheets = google.sheets({ version: "v4", auth });
     const puTotal = Math.round((parseFloat(factsScore) + parseFloat(psGrade)) * 100) / 100;
 
-    // Find the student's row in the Schoology sheet
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SCHOOLOGY_SHEET_ID,
       range: `${testTabName}!A:C`
@@ -32,7 +31,7 @@ async function updateSchoologyPowerUp(studentName, factsScore, psGrade, testTabN
     for (let i = 1; i < rows.length; i++) {
       if (rows[i][0] === studentName) { rowNum = i + 1; break; }
     }
-    if (!rowNum) return; // student not found
+    if (!rowNum) return;
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: SCHOOLOGY_SHEET_ID,
@@ -121,23 +120,21 @@ function parseRows17(rows) {
       pu_understand:r[62]||"", pu_plan:r[63]||"",
       pu_solve:r[64]||"", pu_check:r[65]||""
     };
-    // Return stored score from sheet — grading happens on frontend
-    const storedTotal = parseFloat(r[3]||0)||0;
-    const storedPct   = parseInt((r[4]||"0").replace("%",""))||0;
-    const storedLetter= r[5]||"?";
-    const storedFacts = parseFloat(r[37]||0)||0;
-    // Build a minimal graded object from stored values — frontend will re-grade fully
+    const storedTotal  = parseFloat(r[3]||0)||0;
+    const storedPct    = parseInt((r[4]||"0").replace("%",""))||0;
+    const storedLetter = r[5]||"?";
+    const storedFacts  = parseFloat(r[37]||0)||0;
     const graded = {
       total: storedTotal, pct: storedPct, letter: storedLetter,
       factsScore: storedFacts, factsCorrect: 0, results: {}, factsResults: {},
       pu_understand: data.pu_understand, pu_plan: data.pu_plan,
       pu_solve: data.pu_solve, pu_check: data.pu_check
     };
-    const emails = getEmails(r[1]);
-    const unitDeductions = parseFloat(r[66]||0)||0;
-    const psGrade     = r[67]!==undefined&&r[67]!==""?parseFloat(r[67]):"";
-    const sketchGrade = r[68]!==undefined&&r[68]!==""?parseFloat(r[68]):"";
-    const graphGrade  = r[69]!==undefined&&r[69]!==""?parseFloat(r[69]):"";
+    const emails        = getEmails(r[1]);
+    const unitDeductions  = parseFloat(r[66]||0)||0;
+    const psGrade       = r[67]!==undefined&&r[67]!==""?parseFloat(r[67]):"";
+    const sketchGrade   = r[68]!==undefined&&r[68]!==""?parseFloat(r[68]):"";
+    const graphGrade    = r[69]!==undefined&&r[69]!==""?parseFloat(r[69]):"";
     const photosEmailed = r[70] || "";
     results.push({
       row:i, timestamp:r[0]?r[0].toString():"",
@@ -178,7 +175,6 @@ module.exports = async (req, res) => {
     if (action === "savePsGrade") {
       const { psGrade } = req.body;
       await updateCell(rowIndex+1, COL.ps, psGrade, sheetName);
-      // Update Schoology Grades sheet with final Power Up
       if (is17) {
         const rows = await getRows(sheetName);
         const subs = parseRows17(rows);
@@ -206,23 +202,27 @@ module.exports = async (req, res) => {
       const rows = await getRows(sheetName);
       const subs = is17 ? parseRows17(rows) : parseRows16(rows);
       const sub = subs.find(s => s.row === rowIndex);
-      if (!sub) return res.status(404).json({ error:"Submission not found" });
-      const e = buildEmailBody(sub);
-      if (!e.to||e.to.length===0)
-        return res.status(400).json({ error:"No email on file for "+sub.name });
+      if (!sub) return res.status(404).json({ error: "Submission not found" });
+
+      // ── Route to the correct email builder ──
+      const e = is17 ? buildEmailBody17(sub) : buildEmailBody(sub);
+
+      if (!e.to || e.to.length === 0)
+        return res.status(400).json({ error: "No email on file for " + sub.name });
+
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT||"587"),
         secure: process.env.SMTP_SECURE==="true",
-        auth: { user:process.env.SMTP_USER, pass:process.env.SMTP_PASS }
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       });
       await transporter.sendMail({
-        from: process.env.SMTP_FROM||process.env.SMTP_USER,
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
         to: e.to.join(","),
         subject: e.subject,
         text: e.body
       });
-      return res.json({ ok:true });
+      return res.json({ ok: true });
     }
 
     if (action === "updateAnswers") {
@@ -266,9 +266,9 @@ module.exports = async (req, res) => {
       return res.json({ ok:true });
     }
 
-    return res.status(400).json({ error:"Unknown action" });
+    return res.status(400).json({ error: "Unknown action" });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error:err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
