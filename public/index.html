@@ -59,12 +59,10 @@
   .ans-key { font-size:.72rem; color:var(--green); margin-top:2px; }
   .deduct-input { width:68px !important; padding:4px 6px !important; font-size:.88rem; text-align:center; }
   .nl-opt { display:flex; align-items:center; gap:12px; margin-bottom:14px; cursor:pointer; padding:8px; border-radius:8px; border:1.5px solid #e2e8f0; }
-  /* Q13 scientific notation input */
   .sci-wrap { display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap; }
   .sci-coeff { width:90px !important; text-align:center; }
   .sci-exp { width:56px !important; text-align:center; font-size:.85rem; }
   .sci-label { font-size:1rem; font-weight:600; color:#374151; white-space:nowrap; }
-  /* Parallelogram SVG diagram */
   .diagram-box { background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px; padding:16px; display:inline-block; margin-top:8px; }
 </style>
 </head>
@@ -238,8 +236,8 @@ const ANSWER_KEY = {
   q12b: ["35","35%","0.35"],
   q12c: ["3/50"],
   q12d: ["0.06"],
-  q13c: ["3.25"],   // coefficient
-  q13e: ["15"],     // exponent
+  q13c: ["3.25"],
+  q13e: ["15"],
   q14:  ["parallelogram","Parallelogram"],
   q14p: ["49"],
   q15:  ["140"],
@@ -410,7 +408,6 @@ function drawNL(opts){
   return s+`</svg>`;
 }
 
-// Q5: x ≤ −3 — answer is "a" (closed circle at -3, shaded LEFT)
 const NL_OPTS_Q5 = [
   {label:"a", dot:-3, open:false, leftShade:true,  rightShade:false},
   {label:"b", dot:-3, open:true,  leftShade:true,  rightShade:false},
@@ -418,25 +415,15 @@ const NL_OPTS_Q5 = [
   {label:"d", dot:-3, open:true,  leftShade:false, rightShade:true},
 ];
 
-// Parallelogram SVG for Q14/Q15
 function drawParallelogram(){
-  // bases 14cm, sides 10.5cm, height 10cm
-  // Draw slanted parallelogram: offset ~3 units left on top
   return `<svg width="260" height="130" style="display:block;overflow:visible;">
-    <!-- shape: bottom-left(20,100), bottom-right(220,100), top-right(200,20), top-left(0,20) -->
     <polygon points="20,100 220,100 200,20 0,20" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
-    <!-- bottom label 14 cm -->
     <text x="120" y="118" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">14 cm</text>
-    <!-- top label 14 cm -->
     <text x="100" y="14" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">14 cm</text>
-    <!-- right side label 10.5 cm -->
     <text x="228" y="65" text-anchor="start" font-size="12" fill="#1e293b">10.5 cm</text>
-    <!-- left side label 10.5 cm -->
     <text x="-8" y="65" text-anchor="end" font-size="12" fill="#1e293b">10.5 cm</text>
-    <!-- height dashed line -->
     <line x1="200" y1="20" x2="200" y2="100" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
     <text x="208" y="62" font-size="11" fill="#64748b">h = 10 cm</text>
-    <!-- right angle mark -->
     <polyline points="192,100 192,92 200,92" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
   </svg>`;
 }
@@ -461,7 +448,6 @@ function gradeData(data){
     total+=earned;
   }
 
-  // Facts
   let factsCorrect=0;
   const factsResults={};
   const fd=data.facts||{};
@@ -469,15 +455,10 @@ function gradeData(data){
   for(const fk of allFK){
     const raw=String(fd[fk]||"").trim();
     const accepted=FACTS_ANSWERS[fk]||[];
-    // For repeating decimals, also accept if student wrote the repeating digit 2+ times
     let correct=accepted.some(a=>norm(raw)===norm(a));
     if(!correct && raw){
-      // Check if this is a repeating decimal key (33.3% or 66.7%)
-      if(fk==="f7d"){ // 33.3% decimal = 0.333...
-        correct=/^0\.3{2,}$/.test(raw);
-      } else if(fk==="f10d"){ // 66.7% decimal = 0.666...
-        correct=/^0\.6{2,}$/.test(raw);
-      }
+      if(fk==="f7d"){ correct=/^0\.3{2,}$/.test(raw); }
+      else if(fk==="f10d"){ correct=/^0\.6{2,}$/.test(raw); }
     }
     factsResults[fk]={correct,answer:raw,expected:(FACTS_ANSWERS[fk]||[""])[0]};
     if(correct)factsCorrect++;
@@ -496,7 +477,6 @@ function gradeData(data){
 // BUILD FORM
 // ============================================================
 function buildForm(){
-  // Facts table
   const tbody=document.getElementById("facts-tbody");
   let rows="";
   for(let i=0;i<6;i++){
@@ -514,15 +494,12 @@ function buildForm(){
   }
   tbody.innerHTML=rows;
 
-  // Q1–9
   document.getElementById("questions-1-9").innerHTML=`
-
   <div class="q-group">
     <label class="q-label">Q1. The team's ratio of games won to games played was 5 to 6. If the team played 36 games, how many games did the team fail to win?</label>
     <input type="text" id="q1" autocomplete="off"/>
     <span class="q-hint-unit">${UNIT_HINT}</span>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q2. Find the a. mean, b. median, c. mode, and d. range of the following scores:<br>
     <span style="font-weight:400;font-size:.95rem;">60, 70, 90, 70, 80, 65, 95, 80, 100, 60</span></label>
@@ -533,19 +510,16 @@ function buildForm(){
       <div><label class="q-label" style="font-weight:400;font-size:.88rem;">d. Range</label><input type="text" id="q2d" autocomplete="off"/></div>
     </div>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q3. Elmo was chagrined to find that the ratio of dandelions to peonies in the garden was 11 to 4. If there were 36 peonies in the garden, how many dandelions were there?</label>
     <input type="text" id="q3" autocomplete="off"/>
     <span class="q-hint-unit">${UNIT_HINT}</span>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q4. Use a unit multiplier to convert 0.47 liter to milliliters. (1 liter = 1000 milliliters)</label>
     <input type="text" id="q4" autocomplete="off"/>
     <span class="q-hint-unit">${UNIT_HINT}</span>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q5. Choose which option correctly graphs x ≤ −3 on a number line.</label>
     <div style="margin-top:10px;">
@@ -563,24 +537,20 @@ function buildForm(){
     </div>
     <input type="hidden" id="q5" value=""/>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q6. Collect like terms: 3xy + xy − 4x + x</label>
     <input type="text" id="q6" autocomplete="off"/>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q7. If sound travels 2 miles in 10 seconds, how far does sound travel in 2 minutes?</label>
     <input type="text" id="q7" autocomplete="off"/>
     <span class="q-hint-unit">${UNIT_HINT}</span>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q8. Before the clowns arrived, only 35% of the children had happy faces. If 117 children did not have happy faces, how many children were there in all?</label>
     <input type="text" id="q8" autocomplete="off"/>
     <span class="q-hint-unit">${UNIT_HINT}</span>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q9. <em>Forty-five thousand dollars was raised in the charity drive. This was nine tenths of the goal.</em></label>
     <div class="grid2" style="margin-top:8px;">
@@ -595,7 +565,6 @@ function buildForm(){
     </div>
   </div>`;
 
-  // Wire Q5 radios
   document.querySelectorAll('input[name="q5"]').forEach(r=>{
     r.addEventListener("change",()=>{
       document.getElementById("q5").value=r.value;
@@ -606,16 +575,11 @@ function buildForm(){
     });
   });
 
-  // Wire Q14 radios
   document.querySelectorAll('input[name="q14"]').forEach(r=>{
-    r.addEventListener("change",()=>{
-      document.getElementById("q14").value=r.value;
-    });
+    r.addEventListener("change",()=>{ document.getElementById("q14").value=r.value; });
   });
 
-  // Q10–15
   document.getElementById("questions-10-15").innerHTML=`
-
   <div class="q-group">
     <label class="q-label">Q10. A certain rectangular prism is 4 inches long, 2 inches wide, and 3 inches high.</label>
     <p style="font-size:.88rem;color:#475569;margin:6px 0 12px;">a. Sketch the figure on your paper. <span style="color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:4px;padding:2px 6px;font-size:.8rem;">2.5 pts — teacher graded</span><br>b. Find its volume. <span style="color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:4px;padding:2px 6px;font-size:.8rem;">2.5 pts — auto graded</span></p>
@@ -623,7 +587,6 @@ function buildForm(){
     <input type="text" id="q10" autocomplete="off" style="max-width:200px;"/>
     <span class="q-hint-unit">${UNIT_HINT}</span>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q11. Find the area of this circle. (Use 3.14 for π)</label>
     <div class="diagram-box" style="margin-bottom:10px;">
@@ -637,7 +600,6 @@ function buildForm(){
     <input type="text" id="q11" autocomplete="off" style="max-width:200px;"/>
     <span class="q-hint-unit">${UNIT_HINT}</span>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q12. Complete this table:</label>
     <div style="overflow-x:auto;margin-top:8px;">
@@ -662,7 +624,6 @@ function buildForm(){
     </table>
     </div>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q13. Multiply and write the product in scientific notation: (2.5 × 10⁹)(1.3 × 10⁶)</label>
     <div class="sci-wrap">
@@ -672,12 +633,9 @@ function buildForm(){
     </div>
     <span class="q-hint">Enter the coefficient first, then the power of 10 in the small box</span>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q14. Name this quadrilateral and find its perimeter.</label>
-    <div class="diagram-box" style="margin-bottom:12px;">
-      ${drawParallelogram()}
-    </div>
+    <div class="diagram-box" style="margin-bottom:12px;">${drawParallelogram()}</div>
     <div class="grid2" style="margin-top:8px;">
       <div>
         <label class="q-label" style="font-weight:400;font-size:.88rem;">a. This quadrilateral is a:</label>
@@ -698,36 +656,29 @@ function buildForm(){
       </div>
     </div>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q15. Find the area of the quadrilateral shown above.</label>
     <input type="text" id="q15" autocomplete="off" style="max-width:200px;"/>
     <span class="q-hint-unit">${UNIT_HINT}</span>
   </div>`;
 
-  // Q16–20
   document.getElementById("questions-16-20").innerHTML=`
-
   <div class="q-group">
     <label class="q-label">Q16. Solve: 15.4 = 1.4p</label>
     <input type="text" id="q16" autocomplete="off" style="max-width:160px;"/>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q17. Solve: z + 4/9 = 1⅓</label>
     <input type="text" id="q17" placeholder="enter as a fraction" autocomplete="off" style="max-width:160px;"/>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q18. Simplify: 3{25 − [7² − 4(11 − 4)]}</label>
     <input type="text" id="q18" autocomplete="off" style="max-width:160px;"/>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q19. (−3) + (−4) − (−7) + (−8)</label>
     <input type="text" id="q19" autocomplete="off" style="max-width:160px;"/>
   </div>
-
   <div class="q-group">
     <label class="q-label">Q20. Use the function rule y = 2x + 1 to find the missing y values. Then graph the x, y pairs on your paper and draw a line through the points.</label>
     <span class="q-hint" style="margin-bottom:10px;">Enter the y value for each x. <span style="color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:4px;padding:2px 6px;font-size:.78rem;">y-values: 2.5 pts auto graded · graph: 2.5 pts teacher graded</span></span>
@@ -750,7 +701,7 @@ function buildForm(){
 }
 
 // ============================================================
-// PHOTO UPLOAD (up to 6)
+// PHOTO UPLOAD
 // ============================================================
 let photoBase64Array = [];
 
@@ -762,8 +713,7 @@ function compressImage(dataUrl, maxWidth=1200, quality=0.7) {
       let w = img.width, h = img.height;
       if(w > maxWidth){ h = Math.round(h * maxWidth / w); w = maxWidth; }
       canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, w, h);
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
       resolve(canvas.toDataURL("image/jpeg", quality));
     };
     img.src = dataUrl;
@@ -781,10 +731,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
       const compressed = await Promise.all(files.map(file => {
         return new Promise(resolve => {
           const reader = new FileReader();
-          reader.onload = async e => {
-            const small = await compressImage(e.target.result);
-            resolve(small);
-          };
+          reader.onload = async e => { resolve(await compressImage(e.target.result)); };
           reader.readAsDataURL(file);
         });
       }));
@@ -850,12 +797,10 @@ async function submitTest(){
     pu_check:document.getElementById("pu_check").value};
   ALL_KEYS.forEach(k=>{const el=document.getElementById(k);data[k]=el?el.value.trim():"";});
 
-  // Grade on frontend
   const graded = gradeData(data);
   data.graded = { total: graded.total, pct: graded.pct, letter: graded.letter, factsScore: graded.factsScore };
   data.total = graded.total; data.pct = graded.pct; data.letter = graded.letter; data.factsScore = graded.factsScore;
 
-  // Include photos directly in payload — server will email them to teacher
   if(photoBase64Array.length > 0) data.photos = photoBase64Array;
   data.photoLinks = [];
 
@@ -938,7 +883,6 @@ async function teacherLogin(){
     const data=await r.json();
     if(data.error){alert("Error: "+data.error);btn.disabled=false;btn.textContent="Login";return;}
     teacherPW=pw;
-    // Re-grade each submission on the frontend using our full gradeData function
     const rawSubs = data.sort((a,b)=>a.name.localeCompare(b.name));
     teacherSubs = rawSubs.map(s => {
       const fullGraded = gradeData(s.data);
@@ -1048,8 +992,6 @@ function openAnswerGrid(idx){
     html+=`<td class="${r.correct?'ans-ok':'ans-wrong'}"><div class="ans-student">${r.answer||'—'}</div>${!r.correct?`<div class="ans-key">✔ ${ck}</div>`:''}</td>`;
   });
   html+=`</tr></tbody></table></div>`;
-
-  // Facts table
   const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
   const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
   html+=`<div style="font-weight:700;font-size:.88rem;color:#374151;margin:18px 0 6px;">⚡ Power-Up Facts (${g.factsCorrect}/24 correct — ${g.factsScore}/5 pts)</div>
@@ -1073,8 +1015,6 @@ function openAnswerGrid(idx){
     </tr>`;
   });
   html+=`</tbody></table></div>`;
-
-  // Problem Solving
   html+=`<div style="font-weight:700;font-size:.88rem;color:#374151;margin:16px 0 6px;">Problem Solving (teacher graded)</div>
   <table style="width:100%;font-size:.85rem;border-collapse:collapse;border:1px solid #e2e8f0;">
     <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;width:100px;">Understand</td><td style="padding:6px 10px;">${g.pu_understand||'—'}</td></tr>
@@ -1082,21 +1022,17 @@ function openAnswerGrid(idx){
     <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">Solve</td><td style="padding:6px 10px;">${g.pu_solve||'—'}</td></tr>
     <tr><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">Check</td><td style="padding:6px 10px;">${g.pu_check||'—'}</td></tr>
   </table>`;
-
-  // Photos
   if(s.photosEmailed){
     html+=`<div style="margin-top:18px;padding:10px 14px;background:#f0fdf4;border-radius:8px;border:1.5px solid #86efac;">
       <span style="font-size:.88rem;font-weight:600;color:#16a34a;">📸 ${s.photosEmailed} — emailed to ${TEACHER_EMAIL_DISPLAY}</span>
     </div>`;
   }
-
   openModal(html, null, null);
 }
 
 function openEditAnswers(idx){
   const s=teacherSubs[idx];
   const g=s.graded;
-
   let html=`<h3 style="margin-bottom:6px;">✏️ Edit Answers — ${s.name}</h3>
   <p style="font-size:.82rem;color:#6b7280;margin-bottom:14px;">Correct any answer the student entered incorrectly. The score will be recalculated when you save.</p>
   <div style="overflow-x:auto;">
@@ -1107,7 +1043,6 @@ function openEditAnswers(idx){
     <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Correct Answer</th>
     <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Override</th>
   </tr></thead><tbody>`;
-
   ALL_KEYS.forEach(k=>{
     const r=g.results[k];
     const ck=(ANSWER_KEY[k]||[""])[0];
@@ -1121,9 +1056,7 @@ function openEditAnswers(idx){
       </td>
     </tr>`;
   });
-
   html+=`</tbody></table></div>
-
   <div style="font-weight:700;font-size:.88rem;color:#374151;margin:18px 0 6px;">⚡ Power-Up Facts</div>
   <div style="overflow-x:auto;">
   <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
@@ -1134,7 +1067,6 @@ function openEditAnswers(idx){
     <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Correct</th>
     <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Override</th>
   </tr></thead><tbody>`;
-
   const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
   const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
   allFK.forEach((fk,i)=>{
@@ -1152,7 +1084,6 @@ function openEditAnswers(idx){
     </tr>`;
   });
   html+=`</tbody></table></div>`;
-
   openModal(html,"💾 Save & Regrade",()=>saveEditedAnswers(idx));
 }
 
@@ -1180,43 +1111,111 @@ async function saveEditedAnswers(idx){
   alert("Answers updated and score recalculated!");
 }
 
+// ============================================================
+// EMAIL PREVIEW  ← FIXED: shows question + student answer for ALL questions
+// ============================================================
 function openEmailPreview(idx){
-  const s=teacherSubs[idx];const g=s.graded;
-  const deduct=s.unitDeductions||0;
-  const sketchGrade=s.sketchGrade!==undefined&&s.sketchGrade!==""?parseFloat(s.sketchGrade):0;
-  const graphGrade=s.graphGrade!==undefined&&s.graphGrade!==""?parseFloat(s.graphGrade):0;
-  const adj=Math.max(0,Math.round((g.total+sketchGrade+graphGrade-deduct)*100)/100);
-  const sketchStr=s.sketchGrade!==undefined&&s.sketchGrade!==""?s.sketchGrade:"__";
-  const graphStr=s.graphGrade!==undefined&&s.graphGrade!==""?s.graphGrade:"__";
-  const unitLine=deduct>0?`Unit deductions: -${deduct} pts\n`:"";
-  const sketchLine=`Q10 Sketch: ${sketchStr} / 2.5 pts  (teacher graded)\n`;
-  const graphLine=`Q20 Graph:  ${graphStr} / 2.5 pts  (teacher graded)\n`;
-  let correct="",wrong="";
-  ALL_KEYS.forEach(k=>{
-    const r=g.results[k];
-    if(r.correct){correct+=`  ${k.toUpperCase()}  OK\n`;}
-    else{wrong+=`\n  ${k.toUpperCase()}: ${QUESTION_TEXT[k]||""}\n       Your answer: ${r.answer||"blank"}\n       Correct: ${(ANSWER_KEY[k]||[""])[0]}\n       Solution: ${SOLUTIONS[k]||""}\n`;}
-  });
-  const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
-  const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
-  let ft="  #    PERCENT    TYPE        YOUR ANS      CORRECT\n  "+"-".repeat(56)+"\n";
-  allFK.forEach((fk,i)=>{
-    const fr=g.factsResults[fk];if(!fr)return;
-    const rowIdx=Math.floor(i/2);const isD=(i%2===0);
-    const mark=fr.correct?"OK":"X  (correct: "+fr.expected+")";
-    ft+="  "+(i+1+".").padEnd(5)+(allRows[rowIdx]?allRows[rowIdx].pct:"").padEnd(11)+(isD?"Decimal":"Fraction").padEnd(12)+(fr.answer||"blank").padEnd(14)+mark+"\n";
-  });
-  const ps=s.psGrade!==undefined&&s.psGrade!==""?s.psGrade:"__";
-  const sk=s.sketchGrade!==undefined&&s.sketchGrade!==""?s.sketchGrade:"__";
-  const gr=s.graphGrade!==undefined&&s.graphGrade!==""?s.graphGrade:"__";
-  const puT=s.psGrade!==undefined&&s.psGrade!==""?(g.factsScore+parseFloat(s.psGrade)).toFixed(2):"__";
-  const photoSection = (s.photos && s.photos.length > 0)
-    ? `\n${"=".repeat(54)}\nSTUDENT'S PAPER TEST PHOTOS\n${"=".repeat(54)}\n${s.photos.map((link,i)=>`Photo ${i+1}: ${link}`).join("\n")}\n`
-    : "";
+  const s = teacherSubs[idx];
+  const g = s.graded;
+  const deduct      = s.unitDeductions || 0;
+  const sketchGrade = (s.sketchGrade !== undefined && s.sketchGrade !== "") ? parseFloat(s.sketchGrade) : 0;
+  const graphGrade  = (s.graphGrade  !== undefined && s.graphGrade  !== "") ? parseFloat(s.graphGrade)  : 0;
+  const adj         = Math.max(0, Math.round((g.total + sketchGrade + graphGrade - deduct) * 100) / 100);
 
-  const body=`Dear Parent/Guardian,\n\n${s.name} has completed Saxon Math Course 2 — Cumulative Test 17A.\n\n${"=".repeat(54)}\nTEST QUESTIONS (Q1–Q20)\n${"=".repeat(54)}\nFinal Score: ${adj} / 100\n${unitLine}${sketchLine}${graphLine}\nCORRECT:\n${correct||"  (none)\n"}\nTO REVIEW:\n${wrong||"  None — perfect score!\n"}${"=".repeat(54)}\nPOWER UP (graded out of 10)\n${"=".repeat(54)}\nFacts:            ${g.factsScore} / 5  (${g.factsCorrect}/24 correct)\nProblem Solving:  ${ps} / 5  (teacher graded)\nTOTAL POWER UP:   ${g.factsScore} + ${ps} = ${puT} / 10\n\nFACTS DETAIL:\n${ft}\nPROBLEM SOLVING (teacher graded, 5 pts total):\n  Understand (1 pt):  ${g.pu_understand||"--"}\n  Plan       (1 pt):  ${g.pu_plan||"--"}\n  Solve      (2 pts): ${g.pu_solve||"--"}\n  Check      (1 pt):  ${g.pu_check||"--"}\n  Correct Answer: Full circle A=3.14(4)²=50.24 m². Chained at garage center → half circle ≈ 25 sq m.\n${photoSection}\n${"=".repeat(54)}\nPlease let me know if you notice any discrepancies so I can review them promptly.\n\nBest regards,\nMrs. West`;
-  const html=`<strong>Subject:</strong> Saxon Math Test 17A Results — ${s.name}<br><hr style="margin:10px 0;"/><pre style="font-size:.82rem;">${body}</pre>`;
-  openModal(html,"Copy to Clipboard",()=>{navigator.clipboard.writeText(body).then(()=>alert("Copied!")).catch(()=>alert("Copy failed."));});
+  const sketchStr = (s.sketchGrade !== undefined && s.sketchGrade !== "") ? s.sketchGrade : "__";
+  const graphStr  = (s.graphGrade  !== undefined && s.graphGrade  !== "") ? s.graphGrade  : "__";
+  const ps        = (s.psGrade     !== undefined && s.psGrade     !== "") ? s.psGrade     : "__";
+  const puT       = (s.psGrade     !== undefined && s.psGrade     !== "")
+                      ? (g.factsScore + parseFloat(s.psGrade)).toFixed(2) : "__";
+
+  const unitLine   = deduct > 0 ? `Unit deductions: -${deduct} pts\n` : "";
+  const sketchLine = `Q10 Sketch: ${sketchStr} / 2.5 pts  (teacher graded)\n`;
+  const graphLine  = `Q20 Graph:  ${graphStr} / 2.5 pts  (teacher graded)\n`;
+  const DIVIDER    = "-".repeat(70);
+
+  // All questions — correct AND incorrect — show question text + student answer
+  let questionLines = "";
+  ALL_KEYS.forEach(k => {
+    const r    = g.results[k];
+    const mark = r.correct ? "✓ CORRECT" : "✗ INCORRECT";
+    const pts  = r.correct ? `+${POINTS[k]} pts` : `+0 / ${POINTS[k]} pts`;
+    questionLines += `\n  ${QUESTION_TEXT[k] || k.toUpperCase()}\n`;
+    questionLines += `  Student answer : ${r.answer || "(blank)"}\n`;
+    if (!r.correct) {
+      questionLines += `  Correct answer : ${(ANSWER_KEY[k] || [""])[0]}\n`;
+      questionLines += `  Solution       : ${SOLUTIONS[k] || ""}\n`;
+    }
+    questionLines += `  ${mark}  ${pts}\n`;
+    questionLines += `  ${DIVIDER}\n`;
+  });
+
+  // Facts table
+  const allFK   = [...FACTS_KEYS_LEFT, ...FACTS_KEYS_RIGHT];
+  const allRows = [...FACTS_ROWS,      ...FACTS_ROWS2];
+  let ft = "  #    PERCENT       DEC ANSWER    FRAC ANSWER   RESULT\n";
+  ft    += "  " + "-".repeat(62) + "\n";
+  for (let i = 0; i < allFK.length; i += 2) {
+    const dfr    = g.factsResults[allFK[i]];
+    const ffr    = g.factsResults[allFK[i+1]];
+    if (!dfr || !ffr) continue;
+    const rowIdx = Math.floor(i / 2);
+    const pctLbl = allRows[rowIdx] ? allRows[rowIdx].pct : "";
+    let result   = "";
+    if (dfr.correct && ffr.correct) {
+      result = "✓";
+    } else {
+      if (!dfr.correct) result += `dec ✗ (${dfr.expected})  `;
+      if (!ffr.correct) result += `frac ✗ (${ffr.expected})`;
+    }
+    ft += "  " + (rowIdx + 1 + ".").padEnd(4)
+        + pctLbl.padEnd(14)
+        + (dfr.answer || "(blank)").padEnd(14)
+        + (ffr.answer || "(blank)").padEnd(14)
+        + result.trim() + "\n";
+  }
+
+  const body =
+`Dear Parent/Guardian,
+
+${s.name} has completed Saxon Math Course 2 — Cumulative Test 17A.
+
+${"=".repeat(54)}
+TEST QUESTIONS (Q1–Q20)
+${"=".repeat(54)}
+Final Score: ${adj} / 100
+${unitLine}${sketchLine}${graphLine}
+${questionLines}
+${"=".repeat(54)}
+POWER UP (graded out of 10)
+${"=".repeat(54)}
+Facts:            ${g.factsScore} / 5  (${g.factsCorrect}/24 correct)
+Problem Solving:  ${ps} / 5  (teacher graded)
+TOTAL POWER UP:   ${g.factsScore} + ${ps} = ${puT} / 10
+
+FACTS DETAIL (Percent → Decimal & Fraction):
+${ft}
+PROBLEM SOLVING (teacher graded, 5 pts total):
+  Understand (1 pt):  ${g.pu_understand || "--"}
+  Plan       (1 pt):  ${g.pu_plan       || "--"}
+  Solve      (2 pts): ${g.pu_solve      || "--"}
+  Check      (1 pt):  ${g.pu_check      || "--"}
+  Correct Answer: Full circle A=3.14(4)²=50.24 m². Chained at garage center → half circle ≈ 25 sq m.
+
+${"=".repeat(54)}
+Please let me know if you notice any discrepancies so I can review them promptly.
+
+Best regards,
+Mrs. West`;
+
+  const html = `<strong>Subject:</strong> Saxon Math Test 17A Results — ${s.name}<br>
+    <hr style="margin:10px 0;"/>
+    <pre style="font-size:.82rem;">${body}</pre>`;
+
+  openModal(html, "Copy to Clipboard", () => {
+    navigator.clipboard.writeText(body)
+      .then(() => alert("Copied!"))
+      .catch(() => alert("Copy failed."));
+  });
 }
 
 async function sendEmail(idx){
@@ -1229,20 +1228,6 @@ async function sendEmail(idx){
     if(data.error){alert("Error: "+data.error);return;}
     alert("Email sent to "+s.emails.join(", ")+"!");
     teacherSubs[idx].emailSent=true;renderTeacher();
-  }catch(e){alert("Error: "+e.message);}
-}
-
-async function sendPhotosEmail(idx){
-  const s=teacherSubs[idx];
-  if(!s.photos||s.photos.length===0){alert("No photos on file for "+s.name);return;}
-  if(!confirm("Send photo links to parents/guardians for "+s.name+"?"))return;
-  try{
-    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({action:"sendPhotosEmail",testId:"17A",password:teacherPW,rowIndex:s.row,photos:s.photos,name:s.name,emails:s.emails})});
-    const data=await r.json();
-    if(data.error){alert("Error: "+data.error);return;}
-    alert("Photo links sent to "+s.emails.join(", ")+"!");
-    closeModal();
   }catch(e){alert("Error: "+e.message);}
 }
 
