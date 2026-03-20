@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saxon Math Course 2 — Practice Test 17</title>
+<style>
+  :root {
+    --navy: #1a2744;
+    --blue: #2563eb;
+    --light-blue: #dbeafe;
+    --accent: #f59e0b;
+    --green: #16a34a;
+    --red: #dc2626;
+    --gray-50: #f9fafb;
+    --gray-200: #e5e7eb;
+    --gray-600: #4b5563;
+    --gray-800: #1f2937;
+    --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: var(--gray-50); color: var(--gray-800); font-size: 15px; line-height: 1.6; }
+  header { background: var(--navy); color: white; padding: 18px 24px; text-align: center; }
+  header h1 { font-size: 1.3rem; font-weight: bold; letter-spacing: 0.02em; }
+  header p { font-size: 0.85rem; opacity: 0.75; margin-top: 4px; }
+  .banner { background: var(--accent); color: var(--navy); text-align: center; padding: 8px; font-size: 0.85rem; font-weight: bold; letter-spacing: 0.05em; }
+  .container { max-width: 820px; margin: 0 auto; padding: 24px 16px 60px; }
+  .section-label { background: var(--navy); color: white; padding: 6px 14px; font-size: 0.78rem; font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; display: inline-block; margin-bottom: 2px; border-radius: 3px 3px 0 0; }
+  .question-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: 0 6px 6px 6px; padding: 18px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .q-num { display: inline-block; background: var(--blue); color: white; font-size: 0.72rem; font-weight: bold; padding: 2px 8px; border-radius: 10px; margin-bottom: 8px; font-family: sans-serif; }
+  .q-num.cumulative { background: var(--navy); }
+  .question-text { margin-bottom: 10px; font-size: 0.95rem; }
+  .sub-question { margin: 8px 0 8px 18px; font-size: 0.93rem; }
+  input[type="text"] { border: 1.5px solid var(--gray-200); border-radius: 4px; padding: 6px 10px; font-size: 0.93rem; font-family: 'Georgia', serif; width: 100%; max-width: 220px; transition: border-color 0.2s; }
+  input:focus { outline: none; border-color: var(--blue); }
+  .answer-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  .answer-label { font-size: 0.82rem; color: var(--gray-600); font-family: sans-serif; min-width: 70px; }
+  .multi-answer { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top: 10px; }
+  .choice-btn { border: 1.5px solid var(--gray-200); background: var(--white); border-radius: 6px; padding: 8px 12px; cursor: pointer; font-family: 'Georgia', serif; font-size: 0.9rem; text-align: left; transition: all 0.15s; }
+  .choice-btn:hover { border-color: var(--blue); background: var(--light-blue); }
+  .choice-btn.selected { border-color: var(--blue); background: var(--light-blue); font-weight: bold; }
+  .choice-btn.correct { border-color: var(--green); background: #dcfce7; }
+  .choice-btn.wrong { border-color: var(--red); background: #fee2e2; }
+  table.math-table { border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+  table.math-table th, table.math-table td { border: 1px solid var(--gray-200); padding: 6px 14px; text-align: center; min-width: 80px; }
+  table.math-table th { background: var(--navy); color: white; font-size: 0.8rem; font-weight: bold; letter-spacing: 0.04em; }
+  table.math-table td input[type="text"] { max-width: 90px; padding: 4px 6px; text-align: center; }
+  .number-line-wrap { margin: 14px 0 10px; }
+  .number-line-svg { width: 100%; max-width: 400px; }
+  .shape-wrap { margin: 12px 0; }
+  table.function-table { border-collapse: collapse; font-size: 0.9rem; margin-top: 10px; }
+  table.function-table th, table.function-table td { border: 1px solid var(--gray-200); padding: 6px 18px; text-align: center; }
+  table.function-table th { background: var(--navy); color: white; font-size: 0.82rem; }
+  table.function-table td input { max-width: 70px; text-align: center; }
+  .coord-grid { margin-top: 12px; }
+  .section-header { font-family: sans-serif; font-size: 0.8rem; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); margin: 32px 0 12px; display: flex; align-items: center; gap: 10px; }
+  .section-header::after { content: ''; flex: 1; border-top: 2px solid var(--navy); }
+  .check-btn { background: var(--blue); color: white; border: none; border-radius: 6px; padding: 10px 28px; font-size: 0.95rem; font-family: sans-serif; cursor: pointer; margin-top: 28px; display: block; width: 100%; max-width: 280px; margin-left: auto; margin-right: auto; transition: background 0.2s; }
+  .check-btn:hover { background: #1d4ed8; }
+  .score-banner { display: none; background: var(--navy); color: white; text-align: center; padding: 18px; border-radius: 8px; margin-top: 28px; font-family: sans-serif; }
+  .score-banner .big-score { font-size: 2.2rem; font-weight: bold; color: var(--accent); }
+  .feedback { font-size: 0.8rem; font-family: sans-serif; margin-top: 4px; }
+  .feedback.correct { color: var(--green); }
+  .feedback.wrong { color: var(--red); }
+  .frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; font-size: 0.9em; margin: 0 2px; }
+  .frac .num { border-bottom: 1px solid currentColor; padding-bottom: 1px; }
+  .frac .den { padding-top: 1px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Saxon Math Course 2 — Practice Test 17</h1>
+  <p>Use this to practice before the real Cumulative Test 17A</p>
+</header>
+<div class="banner">📝 PRACTICE — same concepts, different numbers</div>
+
+<div class="container">
+
+  <div class="section-header">Questions 1–9</div>
+
+  <!-- Q1 -->
+  <div class="section-label">Question 1</div>
+  <div class="question-card">
+    <span class="q-num">1</span>
+    <div class="question-text">
+      A bakery's ratio of loaves sold to loaves baked was 5 to 8. If the bakery baked 64 loaves, how many loaves were <em>not</em> sold?
+    </div>
+    <div class="answer-row">
+      <span class="answer-label">Answer:</span>
+      <input type="text" data-answer="24" data-key="q1" placeholder="loaves">
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="section-label">Question 2</div>
+  <div class="question-card">
+    <span class="q-num">2</span>
+    <div class="question-text">
+      Find the <strong>a.</strong> mean, <strong>b.</strong> mode, <strong>c.</strong> median, and <strong>d.</strong> range of the following quiz scores:<br>
+      62, 75, 75, 80, 84, 88, 88, 88, 92, 108
+    </div>
+    <div class="multi-answer" style="max-width:420px">
+      <div><div class="answer-label">a. Mean</div><input type="text" data-answer="84" data-key="q2a" style="max-width:110px"></div>
+      <div><div class="answer-label">b. Mode</div><input type="text" data-answer="88" data-key="q2b" style="max-width:110px"></div>
+      <div><div class="answer-label">c. Median</div><input type="text" data-answer="86" data-key="q2c" style="max-width:110px"></div>
+      <div><div class="answer-label">d. Range</div><input type="text" data-answer="46" data-key="q2d" style="max-width:110px"></div>
+    </div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="section-label">Question 3</div>
+  <div class="question-card">
+    <span class="q-num">3</span>
+    <div class="question-text">
+      A nature trail has a ratio of oak trees to pine trees of 5 to 2. If there are 30 pine trees on the trail, how many oak trees are there?
+    </div>
+    <div class="answer-row">
+      <span class="answer-label">Answer:</span>
+      <input type="text" data-answer="75" data-key="q3" placeholder="oak trees">
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="section-label">Question 4</div>
+  <div class="question-card">
+    <span class="q-num">4</span>
+    <div class="question-text">
+      Use a unit multiplier to convert <strong>0.85 km</strong> to meters.<br>
+      (1 km = 1000 meters)
+    </div>
+    <div class="answer-row">
+      <span class="answer-label">Answer:</span>
+      <input type="text" data-answer="850" data-key="q4" placeholder="meters">
+    </div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="section-label">Question 5</div>
+  <div class="question-card">
+    <span class="q-num">5</span>
+    <div class="question-text">Graph <em>x</em> = −2 on a number line.</div>
+    <div class="number-line-wrap">
+      <svg class="number-line-svg" viewBox="0 0 400 60" xmlns="http://www.w3.org/2000/svg">
+        <line x1="20" y1="30" x2="380" y2="30" stroke="#1a2744" stroke-width="2"/>
+        <polygon points="380,30 372,26 372,34" fill="#1a2744"/>
+        <g font-family="Georgia" font-size="11" fill="#1a2744" text-anchor="middle">
+          <line x1="60"  y1="24" x2="60"  y2="36" stroke="#1a2744" stroke-width="1.5"/>
+          <line x1="100" y1="24" x2="100" y2="36" stroke="#1a2744" stroke-width="1.5"/>
+          <line x1="140" y1="24" x2="140" y2="36" stroke="#1a2744" stroke-width="1.5"/>
+          <line x1="180" y1="24" x2="180" y2="36" stroke="#1a2744" stroke-width="1.5"/>
+          <line x1="220" y1="24" x2="220" y2="36" stroke="#1a2744" stroke-width="1.5"/>
+          <line x1="260" y1="24" x2="260" y2="36" stroke="#1a2744" stroke-width="1.5"/>
+          <line x1="300" y1="24" x2="300" y2="36" stroke="#1a2744" stroke-width="1.5"/>
+          <line x1="340" y1="24" x2="340" y2="36" stroke="#1a2744" stroke-width="1.5"/>
+          <text x="60"  y="50">−7</text>
+          <text x="100" y="50">−6</text>
+          <text x="140" y="50">−5</text>
+          <text x="180" y="50">−4</text>
+          <text x="220" y="50">−3</text>
+          <text x="260" y="50">−2</text>
+          <text x="300" y="50">−1</text>
+          <text x="340" y="50">0</text>
+        </g>
+        <circle id="nl-dot" cx="260" cy="30" r="7" fill="#2563eb" opacity="0"/>
+      </svg>
+    </div>
+    <div class="multi-answer" style="max-width:360px">
+      <button class="choice-btn" data-nl="−4" onclick="selectNL(this,'−4')">−4</button>
+      <button class="choice-btn" data-nl="−3" onclick="selectNL(this,'−3')">−3</button>
+      <button class="choice-btn" data-nl="−2" onclick="selectNL(this,'−2')" data-correct="true">−2</button>
+      <button class="choice-btn" data-nl="−1" onclick="selectNL(this,'−1')">−1</button>
+    </div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="section-label">Question 6</div>
+  <div class="question-card">
+    <span class="q-num">6</span>
+    <div class="question-text">Collect like terms: <strong>6ab + 3ab − 4a + 2b</strong></div>
+    <div class="answer-row">
+      <span class="answer-label">Answer:</span>
+      <input type="text" data-answer="9ab-4a+2b" data-key="q6" placeholder="simplified expression">
+    </div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="section-label">Question 7</div>
+  <div class="question-card">
+    <span class="q-num">7</span>
+    <div class="question-text">
+      A train travels 5 miles every 4 minutes. How far does the train travel in 2 hours?
+    </div>
+    <div class="answer-row">
+      <span class="answer-label">Answer:</span>
+      <input type="text" data-answer="150" data-key="q7" placeholder="miles">
+    </div>
+  </div>
+
+  <!-- Q8 -->
+  <div class="section-label">Question 8</div>
+  <div class="question-card">
+    <span class="q-num">8</span>
+    <div class="question-text">
+      At a school assembly, 35% of the seats were empty. If 91 seats were empty, how many total seats were in the auditorium?
+    </div>
+    <div class="answer-row">
+      <span class="answer-label">Answer:</span>
+      <input type="text" data-answer="260" data-key="q8" placeholder="seats">
+    </div>
+  </div>
+
+  <!-- Q9 -->
+  <div class="section-label">Question 9</div>
+  <div class="question-card">
+    <span class="q-num">9</span>
+    <div class="question-text">
+      Diagram this statement. Then answer the questions that follow.<br><br>
+      <em>"The school library raised $4,500 for new books. This was three fifths of the amount needed."</em>
+    </div>
+    <div class="sub-question"><strong>a.</strong> What was the total amount needed? How much money?</div>
+    <div class="answer-row" style="margin-left:18px">
+      <input type="text" data-answer="7500" data-key="q9a" placeholder="$" style="max-width:140px">
+    </div>
+    <div class="sub-question"><strong>b.</strong> The library fell short of the goal by what percent?</div>
+    <div class="answer-row" style="margin-left:18px">
+      <input type="text" data-answer="40" data-key="q9b" placeholder="%">
+    </div>
+  </div>
+
+  <div class="section-header">Questions 10–20</div>
+
+  <!-- Q10 -->
+  <div class="section-label">Question 10</div>
+  <div class="question-card">
+    <span class="q-num cumulative">10</span>
+    <div class="question-text">
+      A rectangular fish tank is <strong>8 inches long, 4 inches wide, and 5 inches high</strong>. Find its volume. Sketch the prism in your notebook.
+    </div>
+    <div class="answer-row">
+      <span class="answer-label">Volume:</span>
+      <input type="text" data-answer="160" data-key="q10" placeholder="in³">
+    </div>
+  </div>
+
+  <!-- Q11 -->
+  <div class="section-label">Question 11</div>
+  <div class="question-card">
+    <span class="q-num cumulative">11</span>
+    <div class="question-text">Find the area of this circle. (Use π ≈ 3.14)</div>
+    <div class="shape-wrap">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="60" fill="#dbeafe" stroke="#1a2744" stroke-width="2"/>
+        <line x1="80" y1="80" x2="140" y2="80" stroke="#1a2744" stroke-width="1.5" stroke-dasharray="4"/>
+        <text x="108" y="74" font-size="12" font-family="Georgia" fill="#1a2744">r = 5 cm</text>
+        <text x="80" y="84" font-size="10" fill="#1a2744" text-anchor="middle">•</text>
+      </svg>
+    </div>
+    <div class="answer-row">
+      <span class="answer-label">Area:</span>
+      <input type="text" data-answer="78.5" data-key="q11" placeholder="cm²">
+    </div>
+  </div>
+
+  <!-- Q12 -->
+  <div class="section-label">Question 12</div>
+  <div class="question-card">
+    <span class="q-num cumulative">12</span>
+    <div class="question-text">Complete this table.</div>
+    <table class="math-table">
+      <thead><tr><th>Fraction</th><th>Decimal</th><th>Percent</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="frac"><span class="num">1</span><span class="den">4</span></span></td>
+          <td><input type="text" data-answer="0.25" data-key="q12a"></td>
+          <td><input type="text" data-answer="25%" data-key="q12b"></td>
+        </tr>
+        <tr>
+          <td><input type="text" data-answer="9/20" data-key="q12c"></td>
+          <td><input type="text" data-answer="0.45" data-key="q12d"></td>
+          <td>45%</td>
+        </tr>
+        <tr>
+          <td><input type="text" data-answer="13/20" data-key="q12e"></td>
+          <td><input type="text" data-answer="0.65" data-key="q12f"></td>
+          <td>65%</td>
+        </tr>
+        <tr>
+          <td><span class="frac"><span class="num">7</span><span class="den">10</span></span></td>
+          <td><input type="text" data-answer="0.7" data-key="q12g"></td>
+          <td>c. <input type="text" data-answer="70%" data-key="q12gc" style="max-width:70px"></td>
+        </tr>
+        <tr>
+          <td>d. <input type="text" data-answer="3/50" data-key="q12hf" style="max-width:70px"></td>
+          <td><input type="text" data-answer="0.06" data-key="q12h"></td>
+          <td>6%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Q13 -->
+  <div class="section-label">Question 13</div>
+  <div class="question-card">
+    <span class="q-num cumulative">13</span>
+    <div class="question-text">
+      Multiply and write the product in <strong>scientific notation</strong>:<br>
+      (2.5 × 10³) × (3.0 × 10²)
+    </div>
+    <div class="answer-row">
+      <input type="text" data-answer="7.5" data-key="q13a" placeholder="coefficient" style="max-width:100px">
+      <span style="font-size:1.1rem; padding:0 4px">× 10</span>
+      <input type="text" data-answer="5" data-key="q13b" placeholder="exp" style="max-width:60px">
+    </div>
+  </div>
+
+  <!-- Q14 -->
+  <div class="section-label">Question 14</div>
+  <div class="question-card">
+    <span class="q-num cumulative">14</span>
+    <div class="question-text">Name this quadrilateral and find its perimeter.</div>
+    <div class="shape-wrap">
+      <svg width="260" height="140" viewBox="0 0 260 140">
+        <polygon points="40,110 190,110 175,20 55,20" fill="#fef9c3" stroke="#1a2744" stroke-width="2"/>
+        <!-- side labels -->
+        <text x="115" y="127" font-size="12" font-family="Georgia" fill="#1a2744" text-anchor="middle">11 cm</text>
+        <text x="28" y="68" font-size="12" font-family="Georgia" fill="#1a2744" text-anchor="middle">6 cm</text>
+        <text x="115" y="15" font-size="12" font-family="Georgia" fill="#1a2744" text-anchor="middle">11 cm</text>
+        <text x="200" y="68" font-size="12" font-family="Georgia" fill="#1a2744" text-anchor="middle">6 cm</text>
+        <!-- height dashed line from top-right foot down to base -->
+        <line x1="175" y1="20" x2="175" y2="110" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="4"/>
+        <!-- right-angle marker at foot -->
+        <rect x="166" y="101" width="9" height="9" fill="none" stroke="#2563eb" stroke-width="1.2"/>
+        <text x="185" y="70" font-size="11" font-family="Georgia" fill="#2563eb">h = 7 cm</text>
+      </svg>
+    </div>
+    <div class="answer-row">
+      <span class="answer-label">Name:</span>
+      <input type="text" data-answer="parallelogram" data-key="q14a" style="max-width:160px">
+    </div>
+    <div class="answer-row">
+      <span class="answer-label">Perimeter:</span>
+      <input type="text" data-answer="34" data-key="q14b" placeholder="cm">
+    </div>
+  </div>
+
+  <!-- Q15 -->
+  <div class="section-label">Question 15</div>
+  <div class="question-card">
+    <span class="q-num cumulative">15</span>
+    <div class="question-text">Find the area of the quadrilateral in Question 14. Refer to the figure above.</div>
+    <div class="answer-row">
+      <span class="answer-label">Area:</span>
+      <input type="text" data-answer="77" data-key="q15" placeholder="cm²">
+    </div>
+  </div>
+
+  <!-- Q16 -->
+  <div class="section-label">Question 16</div>
+  <div class="question-card">
+    <span class="q-num cumulative">16</span>
+    <div class="question-text">Solve: <strong>15.4 − 1.4p = 8.4</strong></div>
+    <div class="answer-row">
+      <span class="answer-label">p =</span>
+      <input type="text" data-answer="5" data-key="q16" style="max-width:80px">
+    </div>
+  </div>
+
+  <!-- Q17 -->
+  <div class="section-label">Question 17</div>
+  <div class="question-card">
+    <span class="q-num cumulative">17</span>
+    <div class="question-text">Solve: <em>z</em> ÷ <span class="frac"><span class="num">2</span><span class="den">3</span></span> = 3 − 1<span class="frac"><span class="num">1</span><span class="den">3</span></span></div>
+    <div class="answer-row">
+      <span class="answer-label">z =</span>
+      <input type="text" data-answer="1.111" data-key="q17" style="max-width:100px">
+    </div>
+  </div>
+
+  <!-- Q18 -->
+  <div class="section-label">Question 18</div>
+  <div class="question-card">
+    <span class="q-num cumulative">18</span>
+    <div class="question-text">Simplify: <strong>5 · 3 + [3² − (2 + 4)]</strong></div>
+    <div class="answer-row">
+      <span class="answer-label">Answer:</span>
+      <input type="text" data-answer="18" data-key="q18" style="max-width:80px">
+    </div>
+  </div>
+
+  <!-- Q19 -->
+  <div class="section-label">Question 19</div>
+  <div class="question-card">
+    <span class="q-num cumulative">19</span>
+    <div class="question-text">Simplify: (−3) + (−7) − (−4) + (−8)</div>
+    <div class="answer-row">
+      <span class="answer-label">Answer:</span>
+      <input type="text" data-answer="-14" data-key="q19" style="max-width:80px">
+    </div>
+  </div>
+
+  <!-- Q20 -->
+  <div class="section-label">Question 20</div>
+  <div class="question-card">
+    <span class="q-num cumulative">20</span>
+    <div class="question-text">
+      Find the missing numbers in the table using the rule. Then graph the x, y pairs on a coordinate plane on your paper and draw a line through the points.<br><br>
+      Rule: <strong>y = 2x + 1</strong>
+    </div>
+    <table class="function-table">
+      <thead><tr><th>x</th><th>y</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td><input type="text" data-answer="1" data-key="q20a" style="max-width:60px;text-align:center"></td></tr>
+        <tr><td>1</td><td><input type="text" data-answer="3" data-key="q20b" style="max-width:60px;text-align:center"></td></tr>
+        <tr><td>2</td><td><input type="text" data-answer="5" data-key="q20c" style="max-width:60px;text-align:center"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button class="check-btn" onclick="checkAnswers()">✓ Check My Answers</button>
+
+  <div class="score-banner" id="score-banner">
+    <div>Your Practice Score</div>
+    <div class="big-score" id="score-display">—</div>
+    <div id="score-msg" style="margin-top:8px;font-size:0.9rem;opacity:0.85"></div>
+  </div>
+
+</div>
+
+<script>
+let selectedNL = null;
+function selectNL(btn, val) {
+  document.querySelectorAll('.choice-btn[data-nl]').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedNL = val;
+}
+
+function normalize(str) {
+  return str.trim().toLowerCase()
+    .replace(/\s+/g,'')
+    .replace(/[−–]/g,'-');
+}
+
+function isClose(a, b) {
+  const na = parseFloat(a), nb = parseFloat(b);
+  if (isNaN(na) || isNaN(nb)) return false;
+  return Math.abs(na - nb) < 0.06;
+}
+
+function checkInput(input) {
+  const correct = input.dataset.answer;
+  const userVal = input.value;
+  if (!userVal.trim()) return null;
+  const n = normalize(userVal);
+  const c = normalize(correct);
+  if (n === c) return true;
+  if (isClose(n, c)) return true;
+  if (c.includes('/')) {
+    const parts = c.split('/');
+    const frac = parseFloat(parts[0]) / parseFloat(parts[1]);
+    if (isClose(parseFloat(n), frac)) return true;
+    if (n === c) return true;
+  }
+  if (c === '1.111') {
+    if (Math.abs(parseFloat(n) - 10/9) < 0.01) return true;
+    if (n === '10/9') return true;
+  }
+  if (c === 'parallelogram' && n.includes('parallel')) return true;
+  if (c.endsWith('%') && normalize(c.replace('%','')) === n.replace('%','')) return true;
+  if (!c.endsWith('%') && n === c.replace('%','')) return true;
+  if (c === '9ab-4a+2b' && n === '9ab-4a+2b') return true;
+  return false;
+}
+
+function checkAnswers() {
+  let total = 0, answered = 0;
+  document.querySelectorAll('input[data-answer]').forEach(input => {
+    const existing = input.parentElement.querySelector('.feedback');
+    if (existing) existing.remove();
+    if (!input.value.trim()) return;
+    answered++;
+    const result = checkInput(input);
+    const fb = document.createElement('div');
+    fb.className = 'feedback ' + (result ? 'correct' : 'wrong');
+    fb.textContent = result ? '✓ Correct' : ('✗ Answer: ' + input.dataset.answer);
+    input.style.borderColor = result ? 'var(--green)' : 'var(--red)';
+    input.parentElement.appendChild(fb);
+    if (result) total++;
+  });
+
+  document.querySelectorAll('.choice-btn[data-nl]').forEach(b => b.classList.remove('correct','wrong'));
+  if (selectedNL) {
+    answered++;
+    const chosen = document.querySelector('.choice-btn[data-nl="'+selectedNL+'"]');
+    if (selectedNL === '−2') {
+      chosen.classList.add('correct');
+      total++;
+      document.getElementById('nl-dot').setAttribute('opacity','1');
+    } else {
+      chosen.classList.add('wrong');
+      document.querySelector('.choice-btn[data-correct="true"]').classList.add('correct');
+    }
+  }
+
+  const banner = document.getElementById('score-banner');
+  banner.style.display = 'block';
+  const pct = answered > 0 ? Math.round(total/answered*100) : 0;
+  document.getElementById('score-display').textContent = total + ' / ' + answered + ' (' + pct + '%)';
+  let msg = '';
+  if (pct >= 90) msg = '🌟 Excellent work! You\'re ready for Test 17A.';
+  else if (pct >= 75) msg = '👍 Good job — review any missed questions.';
+  else if (pct >= 60) msg = '📖 Keep practicing — you\'re getting there!';
+  else msg = '📚 Study the missed concepts and try again.';
+  document.getElementById('score-msg').textContent = msg;
+  banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+</script>
+</body>
+</html>
