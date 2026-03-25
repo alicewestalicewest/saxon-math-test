@@ -24,7 +24,8 @@ const TEAM_BLUE = [
   "Aarohi Agrawal","Alisha Agrawal","Ananya Arvind","Elizabeth Cai","Eloisa Keojampa",
   "Eric Huang","Erin Yuen","Evan Chang","Jenny Montgomery","Jooha Park",
   "Leo Matsiev","Maya Benavidez","Nathan Streeter","Peyton Pereira","Rynshall Chen",
-  "Samiha Java","Tate Yeung","Thea Angelidis-Smith","Vassilis Papadimitriou"
+  "Samiha Java","Tate Yeung","Thea Angelidis-Smith","Vassilis Papadimitriou",
+  "Test Student Blue"
 ];
 
 function getSheet17Name(studentName) {
