@@ -217,9 +217,8 @@ async function load(){
       document.getElementById("login-status").innerHTML=`<div class="status error" style="margin-top:12px;">❌ ${data.error}</div>`;
       btn.disabled=false;btn.textContent="Load Submissions";return;
     }
-    // Filter to only Responses17A (original tab) — exclude Blue/Red
-    subs=data.filter(s=>!s.sheetName||s.sheetName==="Responses17A")
-      .sort((a,b)=>a.name.localeCompare(b.name))
+    // Show all submissions — the original Responses17A tab rows may not have sheetName tagged
+    subs=data.sort((a,b)=>a.name.localeCompare(b.name))
       .map(s=>({...s,graded:gradeData(s.data)}));
     document.getElementById("login-card").style.display="none";
     document.getElementById("main").style.display="block";
