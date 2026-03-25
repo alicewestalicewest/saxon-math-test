@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Test 17A — Submissions Viewer</title>
+<style>
+  :root { --blue:#2563eb; --green:#16a34a; --red:#dc2626; --gray:#6b7280; --bg:#f8fafc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:var(--bg); color:#1e293b; }
+  header { background:var(--blue); color:#fff; padding:16px 24px; display:flex; align-items:center; gap:12px; }
+  header h1 { font-size:1.2rem; }
+  .container { max-width:960px; margin:0 auto; padding:24px 16px 60px; }
+  .card { background:#fff; border-radius:12px; box-shadow:0 1px 6px #0001; padding:24px; margin-bottom:20px; }
+  .btn { padding:9px 20px; border:none; border-radius:8px; font-size:.93rem; font-weight:600; cursor:pointer; }
+  .btn-primary { background:var(--blue); color:#fff; }
+  .btn-green  { background:var(--green); color:#fff; }
+  .btn-gray   { background:#e5e7eb; color:#374151; }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  input,select { padding:9px 12px; border:1.5px solid #d1d5db; border-radius:7px; font-size:.95rem; }
+  input:focus,select:focus { outline:none; border-color:var(--blue); }
+  .spinner { display:inline-block; width:18px; height:18px; border:3px solid #fff4; border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:6px; }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  th { background:#f1f5f9; padding:10px 12px; border:1px solid #e2e8f0; text-align:left; font-size:.82rem; text-transform:uppercase; letter-spacing:.04em; color:#475569; }
+  td { padding:10px 12px; border:1px solid #e2e8f0; vertical-align:top; }
+  tr:hover td { background:#f8fafc; }
+  .score-cell { font-weight:800; font-size:1.05rem; text-align:center; }
+  .grade-a { color:var(--green); }
+  .grade-b { color:#2563eb; }
+  .grade-c { color:#d97706; }
+  .grade-d,.grade-f { color:var(--red); }
+  .pill { display:inline-block; padding:2px 9px; border-radius:20px; font-size:.75rem; font-weight:700; }
+  .pill-blue { background:#dbeafe; color:#1d4ed8; }
+  .pill-red  { background:#fee2e2; color:#dc2626; }
+  .modal-bg { display:none; position:fixed; inset:0; background:#0007; z-index:100; align-items:center; justify-content:center; }
+  .modal-bg.open { display:flex; }
+  .modal { background:#fff; border-radius:14px; padding:28px; max-width:760px; width:96%; max-height:90vh; overflow-y:auto; }
+  pre { white-space:pre-wrap; font-family:'Segoe UI',monospace; font-size:.82rem; line-height:1.5; }
+  .status { padding:12px 16px; border-radius:8px; font-size:.9rem; margin-bottom:16px; }
+  .status.info  { background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; }
+  .status.error { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; }
+  .deduct-input { width:68px; padding:4px 6px; font-size:.88rem; text-align:center; border:1.5px solid #d1d5db; border-radius:5px; }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+  <h1>Test 17A — Responses17A Viewer</h1>
+</header>
+
+<div class="container">
+  <div class="card" id="login-card">
+    <div style="font-weight:700;font-size:1rem;margin-bottom:14px;color:#1e40af;">🔐 Teacher Login</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <input type="password" id="pw" placeholder="Teacher password" style="max-width:240px;"
+             onkeydown="if(event.key==='Enter')load()"/>
+      <button class="btn btn-primary" onclick="load()" id="load-btn">Load Submissions</button>
+    </div>
+    <div id="login-status"></div>
+  </div>
+
+  <div id="main" style="display:none;">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+        <div style="font-weight:700;font-size:1rem;color:#1e40af;">
+          📋 Submissions from Responses17A
+          <span id="sub-count" style="font-weight:400;font-size:.85rem;color:#64748b;margin-left:8px;"></span>
+        </div>
+        <button class="btn btn-gray" style="font-size:.82rem;" onclick="exportCSV()">📥 Export CSV</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="sub-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Date</th>
+              <th style="text-align:center;">Score</th>
+              <th style="text-align:center;">%</th>
+              <th style="text-align:center;">Grade</th>
+              <th style="text-align:center;">Deduction</th>
+              <th style="text-align:center;">Sketch /2.5</th>
+              <th style="text-align:center;">Graph /2.5</th>
+              <th style="text-align:center;">PS /5</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sub-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div id="modal-body"></div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-green" id="modal-action" style="display:none;"></button>
+      <button class="btn btn-gray" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Answer key & grading (mirrors index.html) ─────────────────
+const ANSWER_KEY = {
+  q1:["6"],
+  q2a:["77"],q2b:["75"],q2c:["60,70,80","60, 70, 80","60 70 80"],q2d:["40"],
+  q3:["99"],q4:["470"],q5:["a"],q6:["4xy-3x","4xy - 3x"],q7:["24"],q8:["180"],
+  q9a:["50000","$50,000","$50000","50,000"],q9b:["10","10%","0.1","1/10"],
+  q10:["24"],q11:["113.04"],
+  q12a:["0.35"],q12b:["35","35%","0.35"],q12c:["3/50"],q12d:["0.06"],
+  q13c:["3.25"],q13e:["15"],
+  q14:["p"],  // startsWith p
+  q14p:["49"],q15:["140"],
+  q16:["11"],q17:["8/9"],q18:["12"],q19:["-8"],
+  q20a:["1"],q20b:["3"],q20c:["5"]
+};
+const POINTS = {
+  q1:5,q2a:1.25,q2b:1.25,q2c:1.25,q2d:1.25,
+  q3:5,q4:5,q5:5,q6:5,q7:5,q8:5,
+  q9a:2.5,q9b:2.5,q10:2.5,q11:5,
+  q12a:1.25,q12b:1.25,q12c:1.25,q12d:1.25,
+  q13c:2.5,q13e:2.5,q14:2.5,q14p:2.5,q15:5,
+  q16:5,q17:5,q18:5,q19:5,
+  q20a:0.84,q20b:0.83,q20c:0.83
+};
+const ALL_KEYS=["q1","q2a","q2b","q2c","q2d","q3","q4","q5","q6","q7","q8","q9a","q9b","q10","q11","q12a","q12b","q12c","q12d","q13c","q13e","q14","q14p","q15","q16","q17","q18","q19","q20a","q20b","q20c"];
+const QUESTION_TEXT={
+  q1:"Ratio games won:played = 5:6, played 36. How many failed to win?",
+  q2a:"Mean of: 60,70,90,70,80,65,95,80,100,60",q2b:"Median",q2c:"Mode",q2d:"Range",
+  q3:"Ratio dandelions:peonies 11:4, 36 peonies. How many dandelions?",
+  q4:"Convert 0.47 L to mL",q5:"Graph x ≤ −3",q6:"Collect like terms: 3xy+xy−4x+x",
+  q7:"Sound travels 2mi/10sec. Distance in 2 min?",
+  q8:"35% happy faces, 117 not. Total children?",
+  q9a:"$45,000 = 9/10 of goal. Goal?",q9b:"Fell short by what %?",
+  q10:"Prism 4×2×3 in. Volume?",q11:"Circle r=6cm, area? (π=3.14)",
+  q12a:"7/20 as decimal",q12b:"7/20 as %",q12c:"6% as fraction",q12d:"6% as decimal",
+  q13c:"(2.5×10⁹)(1.3×10⁶) — coefficient",q13e:"— exponent",
+  q14:"Name the quadrilateral",q14p:"Perimeter",q15:"Area",
+  q16:"15.4=1.4p",q17:"z+4/9=1⅓",q18:"3{25−[7²−4(11−4)]}",q19:"(−3)+(−4)−(−7)+(−8)",
+  q20a:"y=2x+1, x=0",q20b:"y=2x+1, x=1",q20c:"y=2x+1, x=2"
+};
+const SOLUTIONS={
+  q1:"5:1:6 → 1/6×36=6",q2a:"770÷10=77",q2b:"(70+80)/2=75",q2c:"60,70,80 each twice",q2d:"100−60=40",
+  q3:"11/4=d/36 → d=99",q4:"0.47×1000=470",q5:"Closed dot at −3, shaded left",
+  q6:"4xy−3x",q7:"2/10=d/120 → d=24",q8:"65%=117 → 180",
+  q9a:"45000÷0.9=50000",q9b:"5000/50000=10%",q10:"4×2×3=24",
+  q11:"3.14×36=113.04",q12a:"0.35",q12b:"35%",q12c:"3/50",q12d:"0.06",
+  q13c:"2.5×1.3=3.25",q13e:"10⁹×10⁶=10¹⁵",
+  q14:"Parallelogram",q14p:"14+10.5+14+10.5=49",q15:"14×10=140",
+  q16:"15.4÷1.4=11",q17:"4/3−4/9=8/9",q18:"3×4=12",q19:"−8",
+  q20a:"1",q20b:"3",q20c:"5"
+};
+
+const FACTS_KEYS=["f1d","f1f","f2d","f2f","f3d","f3f","f4d","f4f","f5d","f5f","f6d","f6f","f7d","f7f","f8d","f8f","f9d","f9f","f10d","f10f","f11d","f11f","f12d","f12f"];
+const FACTS_ROWS=[{pct:"10%",dec:"0.1",frac:"1/10"},{pct:"90%",dec:"0.9",frac:"9/10"},{pct:"5%",dec:"0.05",frac:"1/20"},{pct:"12½%",dec:"0.125",frac:"1/8"},{pct:"50%",dec:"0.5",frac:"1/2"},{pct:"25%",dec:"0.25",frac:"1/4"},{pct:"33⅓%",dec:"0.333",frac:"1/3"},{pct:"20%",dec:"0.2",frac:"1/5"},{pct:"75%",dec:"0.75",frac:"3/4"},{pct:"66⅔%",dec:"0.667",frac:"2/3"},{pct:"1%",dec:"0.01",frac:"1/100"},{pct:"250%",dec:"2.5",frac:"5/2"}];
+
+function norm(s){return String(s||"").toLowerCase().replace(/\s+/g,"").replace(/,/g,"");}
+
+function gradeOne(k,raw){
+  const ans=norm(raw);
+  if(!ans)return false;
+  if(k==="q14") return ans.length>0&&ans[0]==="p";
+  for(const a of (ANSWER_KEY[k]||[]).map(norm)){if(ans===a)return true;}
+  return false;
+}
+
+function gradeData(data){
+  const results={};let total=0;
+  for(const k of ALL_KEYS){
+    const raw=String(data[k]||"").trim();
+    const correct=gradeOne(k,raw);
+    const earned=correct?POINTS[k]:0;
+    results[k]={correct,earned,answer:raw};
+    total+=earned;
+  }
+  let factsCorrect=0;const factsResults={};
+  const fd=data.facts||{};
+  FACTS_KEYS.forEach((fk,i)=>{
+    const raw=String(fd[fk]||"").trim();
+    const rowIdx=Math.floor(i/2);const isD=(i%2===0);
+    const expected=isD?FACTS_ROWS[rowIdx].dec:FACTS_ROWS[rowIdx].frac;
+    let correct=norm(raw)===norm(expected);
+    if(!correct&&raw){
+      if(fk==="f7d")correct=/^0\.3{2,}$/.test(raw);
+      else if(fk==="f10d")correct=/^0\.6{2,}$/.test(raw);
+    }
+    factsResults[fk]={correct,answer:raw,expected};
+    if(correct)factsCorrect++;
+  });
+  const factsScore=Math.round((factsCorrect/24)*5*100)/100;
+  total=Math.round(total*100)/100;
+  const pct=Math.round((total/100)*100);
+  const letter=pct>=90?"A":pct>=80?"B":pct>=70?"C":pct>=60?"D":"F";
+  return{total,pct,letter,results,factsScore,factsCorrect,factsResults,
+    pu_understand:data.pu_understand||"",pu_plan:data.pu_plan||"",
+    pu_solve:data.pu_solve||"",pu_check:data.pu_check||""};
+}
+
+// ── State ─────────────────────────────────────────────────────
+let pw="", subs=[];
+
+async function load(){
+  pw=document.getElementById("pw").value;
+  const btn=document.getElementById("load-btn");
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Loading…';
+  document.getElementById("login-status").innerHTML="";
+  try{
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"getData",password:pw,testId:"17A"})});
+    const data=await r.json();
+    if(data.error){
+      document.getElementById("login-status").innerHTML=`<div class="status error" style="margin-top:12px;">❌ ${data.error}</div>`;
+      btn.disabled=false;btn.textContent="Load Submissions";return;
+    }
+    // Filter to only Responses17A (original tab) — exclude Blue/Red
+    subs=data.filter(s=>!s.sheetName||s.sheetName==="Responses17A")
+      .sort((a,b)=>a.name.localeCompare(b.name))
+      .map(s=>({...s,graded:gradeData(s.data)}));
+    document.getElementById("login-card").style.display="none";
+    document.getElementById("main").style.display="block";
+    render();
+  }catch(e){
+    document.getElementById("login-status").innerHTML=`<div class="status error" style="margin-top:12px;">❌ ${e.message}</div>`;
+  }
+  btn.disabled=false;btn.textContent="Load Submissions";
+}
+
+function render(){
+  document.getElementById("sub-count").textContent=`(${subs.length} student${subs.length!==1?"s":""})`;
+  const tbody=document.getElementById("sub-tbody");
+  if(subs.length===0){tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;color:#6b7280;padding:24px;">No submissions found in Responses17A.</td></tr>`;return;}
+  tbody.innerHTML=subs.map((s,i)=>{
+    const g=s.graded;
+    const deduct=s.unitDeductions||0;
+    const sk=(s.sketchGrade!==undefined&&s.sketchGrade!=="")?parseFloat(s.sketchGrade):0;
+    const gr=(s.graphGrade!==undefined&&s.graphGrade!=="")?parseFloat(s.graphGrade):0;
+    const adj=Math.max(0,Math.round((g.total+sk+gr-deduct)*100)/100);
+    const pct=Math.round((adj/100)*100);
+    const letter=pct>=90?"A":pct>=80?"B":pct>=70?"C":pct>=60?"D":"F";
+    const gradeClass=`grade-${letter.toLowerCase()}`;
+    return `<tr>
+      <td><strong>${s.name}</strong><br><small style="color:#6b7280;">${s.timestamp||""}</small></td>
+      <td style="color:#6b7280;font-size:.85rem;">${s.date||""}</td>
+      <td class="score-cell">${adj}/100</td>
+      <td class="score-cell">${pct}%</td>
+      <td class="score-cell ${gradeClass}">${letter}</td>
+      <td style="text-align:center;"><input type="number" class="deduct-input" min="0" max="20" step="0.5" value="${deduct}" onchange="saveDeduct(${i},this.value)"/></td>
+      <td style="text-align:center;"><input type="number" class="deduct-input" min="0" max="2.5" step="0.5" value="${s.sketchGrade!==undefined&&s.sketchGrade!==""?s.sketchGrade:""}" placeholder="—" onchange="saveSketch(${i},this.value)"/></td>
+      <td style="text-align:center;"><input type="number" class="deduct-input" min="0" max="2.5" step="0.5" value="${s.graphGrade!==undefined&&s.graphGrade!==""?s.graphGrade:""}" placeholder="—" onchange="saveGraph(${i},this.value)"/></td>
+      <td style="text-align:center;"><input type="number" class="deduct-input" min="0" max="5" step="0.5" value="${s.psGrade!==undefined&&s.psGrade!==""?s.psGrade:""}" placeholder="—" onchange="savePS(${i},this.value)"/></td>
+      <td>
+        <button class="btn btn-gray" style="padding:4px 9px;font-size:.78rem;margin:2px;" onclick="viewAnswers(${i})">📋 Answers</button>
+        <button class="btn btn-gray" style="padding:4px 9px;font-size:.78rem;margin:2px;" onclick="previewEmail(${i})">📧 Preview</button>
+        ${s.emailSent
+          ?`<button class="btn" style="padding:4px 9px;font-size:.78rem;margin:2px;background:#15803d;color:#fff;cursor:default;" disabled>✉ Sent ✓</button>`
+          :`<button class="btn btn-green" style="padding:4px 9px;font-size:.78rem;margin:2px;" onclick="sendEmail(${i})">✉ Send</button>`}
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+// ── Save actions ──────────────────────────────────────────────
+async function saveDeduct(i,val){
+  subs[i].unitDeductions=parseFloat(val)||0;
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveDeduction",testId:"17A",password:pw,rowIndex:subs[i].row,deduction:parseFloat(val)||0,sheetName:subs[i].sheetName||"Responses17A"})});}catch(e){console.warn(e);}
+  render();
+}
+async function saveSketch(i,val){
+  subs[i].sketchGrade=parseFloat(val)||0;
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveSketchGrade",testId:"17A",password:pw,rowIndex:subs[i].row,sketchGrade:parseFloat(val)||0,sheetName:subs[i].sheetName||"Responses17A"})});}catch(e){console.warn(e);}
+  render();
+}
+async function saveGraph(i,val){
+  subs[i].graphGrade=parseFloat(val)||0;
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveGraphGrade",testId:"17A",password:pw,rowIndex:subs[i].row,graphGrade:parseFloat(val)||0,sheetName:subs[i].sheetName||"Responses17A"})});}catch(e){console.warn(e);}
+  render();
+}
+async function savePS(i,val){
+  subs[i].psGrade=parseFloat(val)||0;
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"savePsGrade",testId:"17A",password:pw,rowIndex:subs[i].row,psGrade:parseFloat(val)||0,sheetName:subs[i].sheetName||"Responses17A"})});}catch(e){console.warn(e);}
+  render();
+}
+
+// ── Answer grid ───────────────────────────────────────────────
+function viewAnswers(i){
+  const s=subs[i];const g=s.graded;
+  const deduct=s.unitDeductions||0;
+  const sk=(s.sketchGrade!==undefined&&s.sketchGrade!=="")?parseFloat(s.sketchGrade):0;
+  const gr=(s.graphGrade!==undefined&&s.graphGrade!=="")?parseFloat(s.graphGrade):0;
+  const adj=Math.max(0,Math.round((g.total+sk+gr-deduct)*100)/100);
+  let html=`<h3 style="margin-bottom:8px;">📋 ${s.name} — ${adj}/100</h3>
+  <div style="overflow-x:auto;margin-bottom:16px;"><table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+  <thead><tr style="background:#f1f5f9;">
+    <th style="padding:6px 10px;border:1px solid #e2e8f0;">Q</th>
+    <th style="padding:6px 10px;border:1px solid #e2e8f0;">Question</th>
+    <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">Student</th>
+    <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">Correct</th>
+    <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">✓/✗</th>
+  </tr></thead><tbody>`;
+  ALL_KEYS.forEach(k=>{
+    const r=g.results[k];
+    const ck=k==="q14"?"parallelogram":(ANSWER_KEY[k]||[""])[0];
+    html+=`<tr style="background:${r.correct?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:5px 10px;border:1px solid #e2e8f0;font-weight:700;white-space:nowrap;">${k.toUpperCase()}</td>
+      <td style="padding:5px 10px;border:1px solid #e2e8f0;font-size:.8rem;">${QUESTION_TEXT[k]||""}</td>
+      <td style="padding:5px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700;">${r.answer||"—"}</td>
+      <td style="padding:5px 10px;border:1px solid #e2e8f0;text-align:center;color:#16a34a;">${ck}</td>
+      <td style="padding:5px 10px;border:1px solid #e2e8f0;text-align:center;">${r.correct?'<span style="color:#16a34a;font-size:1.1rem;">✓</span>':'<span style="color:#dc2626;font-size:1.1rem;">✗</span>'}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  openModal(html,null,null);
+}
+
+// ── Email preview ─────────────────────────────────────────────
+function buildEmailBody(i){
+  const s=subs[i];const g=s.graded;
+  const deduct=s.unitDeductions||0;
+  const sk=(s.sketchGrade!==undefined&&s.sketchGrade!=="")?parseFloat(s.sketchGrade):0;
+  const gr=(s.graphGrade!==undefined&&s.graphGrade!=="")?parseFloat(s.graphGrade):0;
+  const adj=Math.max(0,Math.round((g.total+sk+gr-deduct)*100)/100);
+  const skStr=(s.sketchGrade!==undefined&&s.sketchGrade!=="")?s.sketchGrade:"__";
+  const grStr=(s.graphGrade!==undefined&&s.graphGrade!=="")?s.graphGrade:"__";
+  const ps=(s.psGrade!==undefined&&s.psGrade!=="")?s.psGrade:"__";
+  const puT=(s.psGrade!==undefined&&s.psGrade!=="")?(g.factsScore+parseFloat(s.psGrade)).toFixed(2):"__";
+  const unitLine=deduct>0?`Unit deductions: -${deduct} pts\n`:"";
+  const D="-".repeat(70);
+  let qLines="";
+  ALL_KEYS.forEach(k=>{
+    const r=g.results[k];
+    const ck=k==="q14"?"parallelogram":(ANSWER_KEY[k]||[""])[0];
+    qLines+=`\n  ${QUESTION_TEXT[k]||k}\n`;
+    qLines+=`  Student answer : ${r.answer||"(blank)"}\n`;
+    if(!r.correct){qLines+=`  Correct answer : ${ck}\n`;qLines+=`  Solution       : ${SOLUTIONS[k]||""}\n`;}
+    qLines+=`  ${r.correct?"✓ CORRECT  +"+r.earned+" pts":"✗ INCORRECT  +0 / "+POINTS[k]+" pts"}\n`;
+    qLines+=`  ${D}\n`;
+  });
+  const allRows=FACTS_ROWS;
+  let ft="  #    PERCENT       DEC ANSWER    FRAC ANSWER   RESULT\n";
+  ft+="  "+"-".repeat(62)+"\n";
+  for(let idx=0;idx<12;idx++){
+    const dk=FACTS_KEYS[idx*2],fk=FACTS_KEYS[idx*2+1];
+    const dfr=g.factsResults[dk],ffr=g.factsResults[fk];
+    if(!dfr||!ffr)continue;
+    let result="";
+    if(dfr.correct&&ffr.correct){result="✓";}
+    else{if(!dfr.correct)result+=`dec ✗ (${dfr.expected})  `;if(!ffr.correct)result+=`frac ✗ (${ffr.expected})`;}
+    ft+="  "+(idx+1+".").padEnd(4)+allRows[idx].pct.padEnd(14)+(dfr.answer||"(blank)").padEnd(14)+(ffr.answer||"(blank)").padEnd(14)+result.trim()+"\n";
+  }
+  return `Dear Parent/Guardian,\n\n${s.name} has completed Saxon Math Course 2 — Cumulative Test 17A.\n\n${"=".repeat(54)}\nTEST QUESTIONS (Q1–Q20)\n${"=".repeat(54)}\nFinal Score: ${adj} / 100\n${unitLine}Q10 Sketch: ${skStr} / 2.5 pts  (teacher graded)\nQ20 Graph:  ${grStr} / 2.5 pts  (teacher graded)\n${qLines}\n${"=".repeat(54)}\nPOWER UP (graded out of 10)\n${"=".repeat(54)}\nFacts:            ${g.factsScore} / 5  (${g.factsCorrect}/24 correct)\nProblem Solving:  ${ps} / 5  (teacher graded)\nTOTAL POWER UP:   ${g.factsScore} + ${ps} = ${puT} / 10\n\nFACTS DETAIL:\n${ft}\nPROBLEM SOLVING:\n  Understand: ${g.pu_understand||"--"}\n  Plan:       ${g.pu_plan||"--"}\n  Solve:      ${g.pu_solve||"--"}\n  Check:      ${g.pu_check||"--"}\n\n${"=".repeat(54)}\nPlease let me know if you notice any discrepancies.\n\nBest regards,\nMrs. West`;
+}
+
+function previewEmail(i){
+  const s=subs[i];
+  const body=buildEmailBody(i);
+  const html=`<strong>To:</strong> ${(s.emails||[]).join(", ")}<br><strong>Subject:</strong> Saxon Math Test 17A Results — ${s.name}<hr style="margin:10px 0;"/><pre>${body}</pre>`;
+  openModal(html,"📋 Copy to Clipboard",()=>{
+    navigator.clipboard.writeText(body).then(()=>alert("Copied!")).catch(()=>alert("Copy failed."));
+  });
+}
+
+async function sendEmail(i){
+  const s=subs[i];
+  if(s.psGrade===undefined||s.psGrade===""){if(!confirm("PS grade not entered yet. Send anyway?"))return;}
+  if(!confirm(`Send email for ${s.name}?`))return;
+  const emailBody=buildEmailBody(i);
+  try{
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"sendEmail",testId:"17A",password:pw,rowIndex:s.row,sheetName:s.sheetName||"Responses17A",emailBody})});
+    const data=await r.json();
+    if(data.error){alert("Error: "+data.error);return;}
+    alert("Email sent to "+(s.emails||[]).join(", ")+"!");
+    subs[i].emailSent=true;render();
+  }catch(e){alert("Error: "+e.message);}
+}
+
+function exportCSV(){
+  let csv="Student,Date,Score,Sketch,Graph,Deduction,Adjusted,Grade\n";
+  subs.forEach(s=>{
+    const g=s.graded;
+    const deduct=s.unitDeductions||0;
+    const sk=(s.sketchGrade!==undefined&&s.sketchGrade!=="")?parseFloat(s.sketchGrade):0;
+    const gr=(s.graphGrade!==undefined&&s.graphGrade!=="")?parseFloat(s.graphGrade):0;
+    const adj=Math.max(0,Math.round((g.total+sk+gr-deduct)*100)/100);
+    const pct=Math.round((adj/100)*100);
+    const letter=pct>=90?"A":pct>=80?"B":pct>=70?"C":pct>=60?"D":"F";
+    csv+=`"${s.name}","${s.date||""}",${g.total},${sk},${gr},${deduct},${adj},${letter}\n`;
+  });
+  const a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download="responses17a.csv";a.click();
+}
+
+function openModal(html,btnLabel,btnFn){
+  document.getElementById("modal-body").innerHTML=html;
+  const btn=document.getElementById("modal-action");
+  if(btnLabel&&btnFn){btn.textContent=btnLabel;btn.onclick=btnFn;btn.style.display="inline-block";}
+  else{btn.style.display="none";}
+  document.getElementById("modal").classList.add("open");
+}
+function closeModal(){document.getElementById("modal").classList.remove("open");}
+</script>
+</body>
+</html>
