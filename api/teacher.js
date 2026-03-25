@@ -1,5 +1,5 @@
 // api/teacher.js
-const { TEACHER_PASSWORD, gradeData, buildEmailBody, buildEmailBody17, getEmails } = require("../lib/data");
+const { TEACHER_PASSWORD, gradeData, gradeData17, buildEmailBody, buildEmailBody17, getEmails } = require("../lib/data");
 const { getRows, deleteRow, updateCell, updateRow, DEFAULT_SHEET } = require("../lib/sheets");
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
@@ -10,7 +10,8 @@ const TEAM_BLUE = [
   "Aarohi Agrawal","Alisha Agrawal","Ananya Arvind","Elizabeth Cai","Eloisa Keojampa",
   "Eric Huang","Erin Yuen","Evan Chang","Jenny Montgomery","Jooha Park",
   "Leo Matsiev","Maya Benavidez","Nathan Streeter","Peyton Pereira","Rynshall Chen",
-  "Samiha Java","Tate Yeung","Thea Angelidis-Smith","Vassilis Papadimitriou"
+  "Samiha Java","Tate Yeung","Thea Angelidis-Smith","Vassilis Papadimitriou",
+  "Test Student Blue"
 ];
 
 function getSheet17Name(studentName) {
@@ -404,7 +405,7 @@ function parseRows17(rows) {
     };
 
     // ── FIX: always recalculate grade from answers instead of using stale stored value ──
-    const graded = gradeData(data);
+    const graded = gradeData17(data);
 
     const emails        = getEmails(r[1]);
     const unitDeductions  = parseFloat(r[66]||0)||0;
