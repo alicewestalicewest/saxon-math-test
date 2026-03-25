@@ -61,7 +61,6 @@
   .nl-opt { display:flex; align-items:center; gap:12px; margin-bottom:14px; cursor:pointer; padding:8px; border-radius:8px; border:1.5px solid #e2e8f0; }
   .sci-wrap { display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap; }
   .sci-coeff { width:90px !important; text-align:center; }
-  .sci-exp { width:56px !important; text-align:center; font-size:.85rem; }
   .sci-label { font-size:1rem; font-weight:600; color:#374151; white-space:nowrap; }
   .diagram-box { background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px; padding:16px; display:inline-block; margin-top:8px; }
 </style>
@@ -149,13 +148,7 @@
   </div>
   <div class="card" style="text-align:center;">
     <p style="margin-bottom:14px;color:#475569;">Review your answers before submitting. You can only submit once.</p>
-    <div style="margin-bottom:18px;padding:16px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0;">
-      <label class="q-label" style="margin-bottom:8px;">📸 Attach photos of your paper test (optional — up to 6)</label>
-      <span class="q-hint" style="margin-bottom:10px;">Take photos of your completed paper test. Your teacher will be able to see them.</span>
-      <input type="file" id="photo-upload" accept="image/*" multiple
-        style="display:block;margin:10px auto;max-width:340px;font-size:.9rem;"/>
-      <div id="photo-preview" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;"></div>
-    </div>
+
     <button class="btn btn-primary" id="submit-btn" onclick="submitTest()">Submit Test</button>
   </div>
 </div>
@@ -198,24 +191,22 @@
 </div>
 
 <script>
-// ============================================================
-// ROSTER
-// ============================================================
 const TEACHER_EMAIL_DISPLAY = "awest1@stratfordschools.com";
-const ROSTER_NAMES = [
+const TEAM_BLUE = [
   "Aarohi Agrawal","Alisha Agrawal","Ananya Arvind","Elizabeth Cai","Eloisa Keojampa",
-  "Eric Huang","Erin Yuen","Evan Chang","Jennifer Chen","Jenny Montgomery",
-  "Jooha Park","Leo Matsiev","Nathan Streeter","Peyton Pereira","Rynshall Chen",
-  "Samiha Java","Tate Yeung","Thea Angelidis-Smith","Vassilis Papadimitriou","Isabelle Yan",
-  "Ethan Jiang","Aarush Gupta","Aria Pan","Kaya Tobiczyk","Claire You",
-  "Lisa Zhang","Ashra Vaka","Erik Xu","Alisha Jain","Catherine Wang",
-  "Rita Liang","Vikram Vemoory","Neha Murthy","Oliver Liu","Becca Zhang",
-  "Francis Wang","Xinyan Shen","Xinkai Shen","William Lu","Elvin Qin","Maya Benavidez"
+  "Eric Huang","Erin Yuen","Evan Chang","Jenny Montgomery","Jooha Park",
+  "Leo Matsiev","Maya Benavidez","Nathan Streeter","Peyton Pereira","Rynshall Chen",
+  "Samiha Java","Tate Yeung","Thea Angelidis-Smith","Vassilis Papadimitriou"
 ];
+const TEAM_RED = [
+  "Aarush Gupta","Alisha Jain","Aria Pan","Ashra Vaka","Becca Zhang",
+  "Catherine Wang","Claire You","Elvin Qin","Erik Xu","Ethan Jiang",
+  "Francis Wang","Isabelle Yan","Jennifer Chen","Kaya Tobiczyk","Lisa Zhang",
+  "Neha Murthy","Oliver Liu","Rita Liang","Vikram Vemoory","William Lu",
+  "Xinkai Shen","Xinyan Shen"
+];
+function getTeam(name){ return TEAM_BLUE.includes(name) ? "TEAM BLUE" : "TEAM RED"; }
 
-// ============================================================
-// ANSWER KEY & POINTS
-// ============================================================
 const ANSWER_KEY = {
   q1:   ["6"],
   q2a:  ["77"],
@@ -231,14 +222,14 @@ const ANSWER_KEY = {
   q9a:  ["50000","$50,000","$50000","50,000"],
   q9b:  ["10","10%","0.1","1/10"],
   q10:  ["24"],
-  q11:  ["113.04"],
+  q11:  ["113.04"],   // r=6, A = 3.14 × 36 = 113.04
   q12a: ["0.35"],
   q12b: ["35","35%","0.35"],
   q12c: ["3/50"],
   q12d: ["0.06"],
   q13c: ["3.25"],
   q13e: ["15"],
-  q14:  ["parallelogram","Parallelogram"],
+  q14:  ["p"],        // graded by startsWith('p') logic — see gradeData
   q14p: ["49"],
   q15:  ["140"],
   q16:  ["11"],
@@ -287,14 +278,14 @@ const QUESTION_TEXT = {
   q9a:  "$45,000 raised was 9/10 of the goal. What was the goal?",
   q9b:  "$45,000 raised was 9/10 of the goal. The drive fell short by what percent?",
   q10:  "Rectangular prism: 4 in × 2 in × 3 in. Find the volume.",
-  q11:  "Find the area of a circle with diameter 8 in. (Use 3.14 for π)",
+  q11:  "Find the area of a circle with radius 6 cm. (Use 3.14 for π)",
   q12a: "Write 7/20 as a decimal.",
   q12b: "Write 7/20 as a percent.",
   q12c: "Write 6% as a fraction in simplest form.",
   q12d: "Write 6% as a decimal.",
   q13c: "Multiply (2.5 × 10⁹)(1.3 × 10⁶) — enter the coefficient.",
   q13e: "Multiply (2.5 × 10⁹)(1.3 × 10⁶) — enter the exponent (power of 10).",
-  q14:  "Name the quadrilateral shown (bases 14 cm, sides 10.5 cm).",
+  q14:  "Name this quadrilateral (bases 14 cm, sides 10.5 cm).",
   q14p: "Find the perimeter of the quadrilateral (bases 14 cm, sides 10.5 cm).",
   q15:  "Find the area of the quadrilateral (base 14 cm, height 10 cm).",
   q16:  "Solve: 15.4 = 1.4p",
@@ -321,7 +312,7 @@ const SOLUTIONS = {
   q9a:  "$45,000 = (9/10) × goal → goal = $50,000",
   q9b:  "Short by $5,000 / $50,000 = 1/10 = 10%",
   q10:  "V = l × w × h = 4 × 2 × 3 = 24 in³",
-  q11:  "r = 4 in; A = π r² = 3.14 × 16 = 113.04 in²",
+  q11:  "r = 6 cm; A = π r² = 3.14 × 36 = 113.04 cm²",
   q12a: "7 ÷ 20 = 0.35",
   q12b: "0.35 × 100 = 35%",
   q12c: "6% = 6/100 = 3/50",
@@ -340,37 +331,28 @@ const SOLUTIONS = {
   q20c: "y = 2(2)+1 = 5"
 };
 
-// ============================================================
-// FACTS POWER UP
-// ============================================================
+// FACTS
 const FACTS_ROWS  = [
-  {pct:"10%",  dec:["0.1"],           frac:["1/10"]},
-  {pct:"90%",  dec:["0.9"],           frac:["9/10"]},
-  {pct:"5%",   dec:["0.05"],          frac:["1/20"]},
-  {pct:"12½%", dec:["0.125"],         frac:["1/8"]},
-  {pct:"50%",  dec:["0.5"],           frac:["1/2"]},
-  {pct:"25%",  dec:["0.25"],          frac:["1/4"]},
+  {pct:"10%",  dec:["0.1"],  frac:["1/10"]},
+  {pct:"90%",  dec:["0.9"],  frac:["9/10"]},
+  {pct:"5%",   dec:["0.05"], frac:["1/20"]},
+  {pct:"12½%", dec:["0.125"],frac:["1/8"]},
+  {pct:"50%",  dec:["0.5"],  frac:["1/2"]},
+  {pct:"25%",  dec:["0.25"], frac:["1/4"]},
 ];
 const FACTS_ROWS2 = [
   {pct:"33⅓%", dec:["0.3","0.33","0.333","0.3333","0.33333","0.333333"], frac:["1/3"]},
-  {pct:"20%",  dec:["0.2"],                frac:["1/5"]},
-  {pct:"75%",  dec:["0.75"],               frac:["3/4"]},
+  {pct:"20%",  dec:["0.2"],  frac:["1/5"]},
+  {pct:"75%",  dec:["0.75"], frac:["3/4"]},
   {pct:"66⅔%", dec:["0.6","0.67","0.667","0.6667","0.66667","0.666667","0.66","0.6666","0.66666","0.666666"], frac:["2/3"]},
-  {pct:"1%",   dec:["0.01"],               frac:["1/100"]},
-  {pct:"250%", dec:["2.5"],                frac:["2 1/2","5/2"]},
+  {pct:"1%",   dec:["0.01"], frac:["1/100"]},
+  {pct:"250%", dec:["2.5"],  frac:["2 1/2","5/2"]},
 ];
-
 const FACTS_KEYS_LEFT  = ["f1d","f1f","f2d","f2f","f3d","f3f","f4d","f4f","f5d","f5f","f6d","f6f"];
 const FACTS_KEYS_RIGHT = ["f7d","f7f","f8d","f8f","f9d","f9f","f10d","f10f","f11d","f11f","f12d","f12f"];
 const FACTS_ANSWERS = {};
-FACTS_ROWS.forEach((r,i)=>{
-  FACTS_ANSWERS[`f${i+1}d`]=r.dec;
-  FACTS_ANSWERS[`f${i+1}f`]=r.frac;
-});
-FACTS_ROWS2.forEach((r,i)=>{
-  FACTS_ANSWERS[`f${i+7}d`]=r.dec;
-  FACTS_ANSWERS[`f${i+7}f`]=r.frac;
-});
+FACTS_ROWS.forEach((r,i)=>{ FACTS_ANSWERS[`f${i+1}d`]=r.dec; FACTS_ANSWERS[`f${i+1}f`]=r.frac; });
+FACTS_ROWS2.forEach((r,i)=>{ FACTS_ANSWERS[`f${i+7}d`]=r.dec; FACTS_ANSWERS[`f${i+7}f`]=r.frac; });
 
 const GRID_COLS = [
   {k:"q1",l:"Q1"},{k:"q2a",l:"Q2a"},{k:"q2b",l:"Q2b"},{k:"q2c",l:"Q2c"},{k:"q2d",l:"Q2d"},
@@ -385,9 +367,7 @@ const GRID_COLS = [
 
 const UNIT_HINT = "✏️ Enter the number only — write the units on your paper";
 
-// ============================================================
-// NUMBER LINE DRAWER
-// ============================================================
+// NUMBER LINE
 function drawNL(opts){
   const W=320,H=54,pad=18,nums=[-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7];
   const x=n=>pad+((n+7)/14)*(W-pad*2);
@@ -415,22 +395,37 @@ const NL_OPTS_Q5 = [
   {label:"d", dot:-3, open:true,  leftShade:false, rightShade:true},
 ];
 
-function drawParallelogram(){
-  return `<svg width="260" height="130" style="display:block;overflow:visible;">
-    <polygon points="20,100 220,100 200,20 0,20" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
-    <text x="120" y="118" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">14 cm</text>
-    <text x="100" y="14" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">14 cm</text>
-    <text x="228" y="65" text-anchor="start" font-size="12" fill="#1e293b">10.5 cm</text>
-    <text x="-8" y="65" text-anchor="end" font-size="12" fill="#1e293b">10.5 cm</text>
-    <line x1="200" y1="20" x2="200" y2="100" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
-    <text x="208" y="62" font-size="11" fill="#64748b">h = 10 cm</text>
-    <polyline points="192,100 192,92 200,92" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+// ── FIX 1: Q11 circle — radius 6, no "diameter" label ──────────────────────
+function drawCircleQ11(){
+  return `<svg width="160" height="160">
+    <circle cx="80" cy="80" r="65" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+    <line x1="80" y1="80" x2="145" y2="80" stroke="#1e293b" stroke-width="1.5"/>
+    <text x="112" y="73" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">r = 6 cm</text>
+    <circle cx="80" cy="80" r="3" fill="#1e293b"/>
   </svg>`;
 }
 
-// ============================================================
+// ── FIX 2: Q14 parallelogram — height label moved well clear of sides ───────
+function drawParallelogram(){
+  return `<svg width="300" height="150" style="display:block;overflow:visible;">
+    <polygon points="30,120 230,120 200,20 0,20" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+    <!-- bottom label -->
+    <text x="130" y="140" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">14 cm</text>
+    <!-- top label -->
+    <text x="100" y="14" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">14 cm</text>
+    <!-- right side label -->
+    <text x="245" y="75" text-anchor="start" font-size="12" fill="#1e293b">10.5 cm</text>
+    <!-- left side label -->
+    <text x="-5" y="75" text-anchor="end" font-size="12" fill="#1e293b">10.5 cm</text>
+    <!-- height dashed line — placed inside and to the right, well away from the slanted side -->
+    <line x1="200" y1="20" x2="200" y2="120" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <polyline points="192,120 192,112 200,112" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+    <!-- height label shifted right of the dashed line so it doesn't touch the side -->
+    <text x="214" y="75" text-anchor="start" font-size="11" fill="#64748b">h = 10 cm</text>
+  </svg>`;
+}
+
 // GRADING
-// ============================================================
 function norm(s){ return String(s||"").toLowerCase().replace(/\s+/g,"").replace(/,/g,""); }
 
 function gradeData(data){
@@ -440,9 +435,16 @@ function gradeData(data){
     const raw=String(data[k]||"").trim();
     const ans=norm(raw);
     let correct=false;
-    for(const a of (ANSWER_KEY[k]||[]).map(norm)){
-      if(ans!==""&&ans===a){correct=true;break;}
+
+    // ── FIX 3: Q14 accepts any answer starting with 'p' (parallelogram, misspelt ok) ──
+    if(k==="q14"){
+      correct = ans.length > 0 && ans[0]==="p";
+    } else {
+      for(const a of (ANSWER_KEY[k]||[]).map(norm)){
+        if(ans!==""&&ans===a){correct=true;break;}
+      }
     }
+
     const earned=correct?POINTS[k]:0;
     results[k]={correct,earned,answer:raw};
     total+=earned;
@@ -473,9 +475,7 @@ function gradeData(data){
     pu_solve:data.pu_solve||"",pu_check:data.pu_check||""};
 }
 
-// ============================================================
 // BUILD FORM
-// ============================================================
 function buildForm(){
   const tbody=document.getElementById("facts-tbody");
   let rows="";
@@ -575,10 +575,6 @@ function buildForm(){
     });
   });
 
-  document.querySelectorAll('input[name="q14"]').forEach(r=>{
-    r.addEventListener("change",()=>{ document.getElementById("q14").value=r.value; });
-  });
-
   document.getElementById("questions-10-15").innerHTML=`
   <div class="q-group">
     <label class="q-label">Q10. A certain rectangular prism is 4 inches long, 2 inches wide, and 3 inches high.</label>
@@ -587,19 +583,16 @@ function buildForm(){
     <input type="text" id="q10" autocomplete="off" style="max-width:200px;"/>
     <span class="q-hint-unit">${UNIT_HINT}</span>
   </div>
+
   <div class="q-group">
     <label class="q-label">Q11. Find the area of this circle. (Use 3.14 for π)</label>
     <div class="diagram-box" style="margin-bottom:10px;">
-      <svg width="140" height="140">
-        <circle cx="70" cy="70" r="58" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
-        <line x1="70" y1="70" x2="128" y2="70" stroke="#1e293b" stroke-width="1.5"/>
-        <text x="95" y="65" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">8 in.</text>
-        <text x="70" y="138" text-anchor="middle" font-size="11" fill="#6b7280">(diameter)</text>
-      </svg>
+      ${drawCircleQ11()}
     </div>
     <input type="text" id="q11" autocomplete="off" style="max-width:200px;"/>
     <span class="q-hint-unit">${UNIT_HINT}</span>
   </div>
+
   <div class="q-group">
     <label class="q-label">Q12. Complete this table:</label>
     <div style="overflow-x:auto;margin-top:8px;">
@@ -624,6 +617,7 @@ function buildForm(){
     </table>
     </div>
   </div>
+
   <div class="q-group">
     <label class="q-label">Q13. Multiply and write the product in scientific notation: (2.5 × 10⁹)(1.3 × 10⁶)</label>
     <div class="sci-wrap">
@@ -633,21 +627,15 @@ function buildForm(){
     </div>
     <span class="q-hint">Enter the coefficient first, then the power of 10 in the small box</span>
   </div>
+
   <div class="q-group">
     <label class="q-label">Q14. Name this quadrilateral and find its perimeter.</label>
     <div class="diagram-box" style="margin-bottom:12px;">${drawParallelogram()}</div>
     <div class="grid2" style="margin-top:8px;">
       <div>
         <label class="q-label" style="font-weight:400;font-size:.88rem;">a. This quadrilateral is a:</label>
-        <div style="margin-top:6px;">
-          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="parallelogram" style="width:auto;margin-right:8px;"/>Parallelogram</label>
-          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="rectangle" style="width:auto;margin-right:8px;"/>Rectangle</label>
-          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="rhombus" style="width:auto;margin-right:8px;"/>Rhombus</label>
-          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="trapezoid" style="width:auto;margin-right:8px;"/>Trapezoid</label>
-          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="square" style="width:auto;margin-right:8px;"/>Square</label>
-          <label style="display:block;font-weight:400;margin-bottom:6px;cursor:pointer;"><input type="radio" name="q14" value="kite" style="width:auto;margin-right:8px;"/>Kite</label>
-        </div>
-        <input type="hidden" id="q14" value=""/>
+        <input type="text" id="q14" autocomplete="off" placeholder="Type the name" style="max-width:260px;margin-top:6px;"/>
+        <span class="q-hint">Spell it as best you can — any answer starting with the letter P will be accepted.</span>
       </div>
       <div>
         <label class="q-label" style="font-weight:400;font-size:.88rem;">b. Perimeter</label>
@@ -656,6 +644,7 @@ function buildForm(){
       </div>
     </div>
   </div>
+
   <div class="q-group">
     <label class="q-label">Q15. Find the area of the quadrilateral shown above.</label>
     <input type="text" id="q15" autocomplete="off" style="max-width:200px;"/>
@@ -700,57 +689,9 @@ function buildForm(){
   </div>`;
 }
 
-// ============================================================
-// PHOTO UPLOAD
-// ============================================================
 let photoBase64Array = [];
 
-function compressImage(dataUrl, maxWidth=1200, quality=0.7) {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      let w = img.width, h = img.height;
-      if(w > maxWidth){ h = Math.round(h * maxWidth / w); w = maxWidth; }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/jpeg", quality));
-    };
-    img.src = dataUrl;
-  });
-}
-
-document.addEventListener("DOMContentLoaded", ()=>{
-  const inp = document.getElementById("photo-upload");
-  if(inp){
-    inp.addEventListener("change", async ()=>{
-      const files = Array.from(inp.files).slice(0, 6);
-      photoBase64Array = [];
-      const preview = document.getElementById("photo-preview");
-      preview.innerHTML = '<span style="font-size:.82rem;color:#6b7280;">Compressing photos…</span>';
-      const compressed = await Promise.all(files.map(file => {
-        return new Promise(resolve => {
-          const reader = new FileReader();
-          reader.onload = async e => { resolve(await compressImage(e.target.result)); };
-          reader.readAsDataURL(file);
-        });
-      }));
-      photoBase64Array = compressed;
-      preview.innerHTML = "";
-      compressed.forEach(dataUrl => {
-        const img = document.createElement("img");
-        img.src = dataUrl;
-        img.style.cssText = "width:120px;height:90px;object-fit:cover;border-radius:6px;border:1.5px solid #e2e8f0;";
-        preview.appendChild(img);
-      });
-      if(files.length > 6) alert("Maximum 6 photos allowed. Only the first 6 will be uploaded.");
-    });
-  }
-});
-
-// ============================================================
-// NAV & STATE
-// ============================================================
+// NAV
 let currentStudent="", currentDate="";
 function showPage(id){
   ["page-start","page-form","page-result","page-teacher"].forEach(p=>{
@@ -776,34 +717,26 @@ function showTeacherLogin(){
   document.getElementById("teacher-content").style.display="none";
 }
 
-// ============================================================
 // SUBMIT
-// ============================================================
 async function submitTest(){
   if(!confirm("Are you sure you want to submit? You can only submit once."))return;
   const btn=document.getElementById("submit-btn");
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Submitting…';
-
   const facts={};
   [...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT].forEach(fk=>{
-    const el=document.getElementById(fk);
-    facts[fk]=el?el.value.trim():"";
+    const el=document.getElementById(fk); facts[fk]=el?el.value.trim():"";
   });
-
   const data={name:currentStudent,date:currentDate,facts,testId:"17A",
     pu_understand:document.getElementById("pu_understand").value,
     pu_plan:document.getElementById("pu_plan").value,
     pu_solve:document.getElementById("pu_solve").value,
     pu_check:document.getElementById("pu_check").value};
   ALL_KEYS.forEach(k=>{const el=document.getElementById(k);data[k]=el?el.value.trim():"";});
-
-  const graded = gradeData(data);
-  data.graded = { total: graded.total, pct: graded.pct, letter: graded.letter, factsScore: graded.factsScore };
-  data.total = graded.total; data.pct = graded.pct; data.letter = graded.letter; data.factsScore = graded.factsScore;
-
-  if(photoBase64Array.length > 0) data.photos = photoBase64Array;
-  data.photoLinks = [];
-
+  const graded=gradeData(data);
+  data.graded={total:graded.total,pct:graded.pct,letter:graded.letter,factsScore:graded.factsScore};
+  data.total=graded.total; data.pct=graded.pct; data.letter=graded.letter; data.factsScore=graded.factsScore;
+  if(photoBase64Array.length>0) data.photos=photoBase64Array;
+  data.photoLinks=[];
   try{
     const r=await fetch("/api/submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
     const result=await r.json();
@@ -813,9 +746,7 @@ async function submitTest(){
   }catch(e){alert("Error submitting: "+e.message);btn.disabled=false;btn.textContent="Submit Test";}
 }
 
-// ============================================================
 // RESULTS
-// ============================================================
 function showResults(g){
   showPage("page-result"); window.scrollTo(0,0);
   document.getElementById("result-summary").innerHTML=`
@@ -832,15 +763,15 @@ function showResults(g){
       </div>
     </div>
     <div style="color:#6b7280;font-size:.88rem;">${currentStudent} &nbsp;|&nbsp; ${currentDate}</div>`;
-
   let html=`<div class="section-title">Question Review</div>`;
   for(const k of ALL_KEYS){
     const r=g.results[k];
+    const displayCorrect = k==="q14" ? "parallelogram" : (ANSWER_KEY[k]||[""])[0];
     html+=`<div class="review-item ${r.correct?'correct':'wrong'}">
       <strong>${k.toUpperCase()}</strong>: <em>${r.answer||'(blank)'}</em>
       ${r.correct
         ?`<span class="pill pill-green">✓ +${r.earned} pts</span>`
-        :`<span class="pill pill-red">✗ 0 pts</span> <span style="font-size:.82rem;color:#6b7280;margin-left:6px;">✔ ${(ANSWER_KEY[k]||[""])[0]}</span>`}
+        :`<span class="pill pill-red">✗ 0 pts</span> <span style="font-size:.82rem;color:#6b7280;margin-left:6px;">✔ ${displayCorrect}</span>`}
     </div>`;
   }
   const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
@@ -869,11 +800,8 @@ function showResults(g){
   document.getElementById("result-detail").innerHTML=html;
 }
 
-// ============================================================
-// TEACHER DASHBOARD
-// ============================================================
+// TEACHER
 let teacherPW="", teacherSubs=[];
-
 async function teacherLogin(){
   const pw=document.getElementById("teacher-pw").value;
   const btn=document.querySelector("#teacher-login-form .btn-primary");
@@ -883,43 +811,33 @@ async function teacherLogin(){
     const data=await r.json();
     if(data.error){alert("Error: "+data.error);btn.disabled=false;btn.textContent="Login";return;}
     teacherPW=pw;
-    const rawSubs = data.sort((a,b)=>a.name.localeCompare(b.name));
-    teacherSubs = rawSubs.map(s => {
-      const fullGraded = gradeData(s.data);
-      return { ...s, graded: fullGraded };
-    });
+    teacherSubs=data.sort((a,b)=>a.name.localeCompare(b.name)).map(s=>({...s,graded:gradeData(s.data)}));
     document.getElementById("teacher-login-form").style.display="none";
     document.getElementById("teacher-content").style.display="block";
     renderTeacher();
   }catch(e){alert("Error: "+e.message);}
   btn.disabled=false;btn.textContent="Login";
 }
-
 async function saveDeduct(idx,val){
   teacherSubs[idx].unitDeductions=parseFloat(val)||0;
-  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveDeduction",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,deduction:parseFloat(val)||0})});}
-  catch(e){console.warn(e);}
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveDeduction",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,deduction:parseFloat(val)||0,sheetName:teacherSubs[idx].sheetName})});}catch(e){console.warn(e);}
   renderTeacher();
 }
 async function savePsGrade(idx,val){
   teacherSubs[idx].psGrade=parseFloat(val)||0;
-  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"savePsGrade",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,psGrade:parseFloat(val)||0})});}
-  catch(e){console.warn(e);}
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"savePsGrade",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,psGrade:parseFloat(val)||0,sheetName:teacherSubs[idx].sheetName})});}catch(e){console.warn(e);}
   renderTeacher();
 }
 async function saveSketchGrade(idx,val){
   teacherSubs[idx].sketchGrade=parseFloat(val)||0;
-  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveSketchGrade",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,sketchGrade:parseFloat(val)||0})});}
-  catch(e){console.warn(e);}
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveSketchGrade",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,sketchGrade:parseFloat(val)||0,sheetName:teacherSubs[idx].sheetName})});}catch(e){console.warn(e);}
   renderTeacher();
 }
 async function saveGraphGrade(idx,val){
   teacherSubs[idx].graphGrade=parseFloat(val)||0;
-  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveGraphGrade",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,graphGrade:parseFloat(val)||0})});}
-  catch(e){console.warn(e);}
+  try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveGraphGrade",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,graphGrade:parseFloat(val)||0,sheetName:teacherSubs[idx].sheetName})});}catch(e){console.warn(e);}
   renderTeacher();
 }
-
 function renderTeacher(){
   const el=document.getElementById("teacher-table");
   if(teacherSubs.length===0){el.innerHTML='<p style="color:#6b7280;padding:12px 0;">No submissions yet.</p>';return;}
@@ -946,14 +864,14 @@ function renderTeacher(){
     const graphPending=s.graphGrade===undefined||s.graphGrade==="";
     const pendingNote=(sketchPending||graphPending)?`<br><small style="color:#92400e;">+sketch+graph pending</small>`:"";
     html+=`<tr style="border-bottom:1px solid #e2e8f0;">
-      <td style="padding:9px;border:1px solid #e2e8f0;"><strong>${s.name}</strong><br><small style="color:#6b7280;">${s.timestamp}</small></td>
+      <td style="padding:9px;border:1px solid #e2e8f0;"><strong>${s.name}</strong> <span style="font-size:.72rem;font-weight:700;padding:1px 7px;border-radius:10px;${getTeam(s.name)==='TEAM BLUE'?'background:#dbeafe;color:#1d4ed8;':'background:#fee2e2;color:#dc2626;'}">${getTeam(s.name)}</span><br><small style="color:#6b7280;">${s.timestamp}</small></td>
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;font-weight:700;">${adj}/100${deduct>0?`<br><small style="color:var(--red);">−${deduct}</small>`:""}${pendingNote}</td>
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">${g.factsScore}/5<br><small style="color:#6b7280;">PU: ${puTotal}</small></td>
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
-        <input type="number" class="deduct-input" min="0" max="2.5" step="0.5" value="${s.sketchGrade!==undefined?s.sketchGrade:''}" placeholder="0–2.5" onchange="saveSketchGrade(${i},this.value)" title="Q10 sketch grade out of 2.5"/>
+        <input type="number" class="deduct-input" min="0" max="2.5" step="0.5" value="${s.sketchGrade!==undefined?s.sketchGrade:''}" placeholder="0–2.5" onchange="saveSketchGrade(${i},this.value)"/>
       </td>
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
-        <input type="number" class="deduct-input" min="0" max="2.5" step="0.5" value="${s.graphGrade!==undefined?s.graphGrade:''}" placeholder="0–2.5" onchange="saveGraphGrade(${i},this.value)" title="Q20 graph grade out of 2.5"/>
+        <input type="number" class="deduct-input" min="0" max="2.5" step="0.5" value="${s.graphGrade!==undefined?s.graphGrade:''}" placeholder="0–2.5" onchange="saveGraphGrade(${i},this.value)"/>
       </td>
       <td style="text-align:center;padding:9px;border:1px solid #e2e8f0;">
         <input type="number" class="deduct-input" min="0" max="20" step="0.5" value="${deduct}" onchange="saveDeduct(${i},this.value)"/>
@@ -988,7 +906,8 @@ function openAnswerGrid(idx){
   GRID_COLS.forEach(c=>{html+=`<th>${c.l}</th>`;});
   html+=`</tr></thead><tbody><tr>`;
   GRID_COLS.forEach(c=>{
-    const r=g.results[c.k];const ck=(ANSWER_KEY[c.k]||[""])[0];
+    const r=g.results[c.k];
+    const ck=c.k==="q14"?"parallelogram":(ANSWER_KEY[c.k]||[""])[0];
     html+=`<td class="${r.correct?'ans-ok':'ans-wrong'}"><div class="ans-student">${r.answer||'—'}</div>${!r.correct?`<div class="ans-key">✔ ${ck}</div>`:''}</td>`;
   });
   html+=`</tr></tbody></table></div>`;
@@ -1027,16 +946,14 @@ function openAnswerGrid(idx){
       <span style="font-size:.88rem;font-weight:600;color:#16a34a;">📸 ${s.photosEmailed} — emailed to ${TEACHER_EMAIL_DISPLAY}</span>
     </div>`;
   }
-  openModal(html, null, null);
+  openModal(html,null,null);
 }
 
 function openEditAnswers(idx){
-  const s=teacherSubs[idx];
-  const g=s.graded;
+  const s=teacherSubs[idx];const g=s.graded;
   let html=`<h3 style="margin-bottom:6px;">✏️ Edit Answers — ${s.name}</h3>
   <p style="font-size:.82rem;color:#6b7280;margin-bottom:14px;">Correct any answer the student entered incorrectly. The score will be recalculated when you save.</p>
-  <div style="overflow-x:auto;">
-  <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.85rem;">
   <thead><tr style="background:#f1f5f9;">
     <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:left;">Question</th>
     <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">Student Answer</th>
@@ -1045,21 +962,19 @@ function openEditAnswers(idx){
   </tr></thead><tbody>`;
   ALL_KEYS.forEach(k=>{
     const r=g.results[k];
-    const ck=(ANSWER_KEY[k]||[""])[0];
+    const ck=k==="q14"?"parallelogram":(ANSWER_KEY[k]||[""])[0];
     html+=`<tr style="background:${r.correct?'#f0fdf4':'#fff1f2'};">
       <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;">${k.toUpperCase()}</td>
       <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">${r.answer||'—'}</td>
       <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;color:#16a34a;font-weight:600;">${ck}</td>
       <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">
-        <input type="text" id="edit_${k}" value="${r.answer||''}"
-          style="width:100px;padding:4px 6px;border:1.5px solid #d1d5db;border-radius:5px;text-align:center;font-size:.85rem;"/>
+        <input type="text" id="edit_${k}" value="${r.answer||''}" style="width:100px;padding:4px 6px;border:1.5px solid #d1d5db;border-radius:5px;text-align:center;font-size:.85rem;"/>
       </td>
     </tr>`;
   });
   html+=`</tbody></table></div>
   <div style="font-weight:700;font-size:.88rem;color:#374151;margin:18px 0 6px;">⚡ Power-Up Facts</div>
-  <div style="overflow-x:auto;">
-  <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.85rem;">
   <thead><tr style="background:#f1f5f9;">
     <th style="padding:7px 10px;border:1px solid #e2e8f0;">%</th>
     <th style="padding:7px 10px;border:1px solid #e2e8f0;">Type</th>
@@ -1078,8 +993,7 @@ function openEditAnswers(idx){
       <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">${fr.answer||'—'}</td>
       <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;color:#16a34a;font-weight:600;">${fr.expected}</td>
       <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;">
-        <input type="text" id="edit_${fk}" value="${fr.answer||''}"
-          style="width:90px;padding:4px 6px;border:1.5px solid #d1d5db;border-radius:5px;text-align:center;font-size:.85rem;"/>
+        <input type="text" id="edit_${fk}" value="${fr.answer||''}" style="width:90px;padding:4px 6px;border:1.5px solid #d1d5db;border-radius:5px;text-align:center;font-size:.85rem;"/>
       </td>
     </tr>`;
   });
@@ -1089,144 +1003,122 @@ function openEditAnswers(idx){
 
 async function saveEditedAnswers(idx){
   const s=teacherSubs[idx];
-  ALL_KEYS.forEach(k=>{
-    const el=document.getElementById("edit_"+k);
-    if(el) s.data[k]=el.value.trim();
-  });
+  ALL_KEYS.forEach(k=>{const el=document.getElementById("edit_"+k);if(el)s.data[k]=el.value.trim();});
   const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
-  allFK.forEach(fk=>{
-    const el=document.getElementById("edit_"+fk);
-    if(el){if(!s.data.facts)s.data.facts={};s.data.facts[fk]=el.value.trim();}
-  });
-  const newGraded=gradeData(s.data);
-  s.graded=newGraded;
+  allFK.forEach(fk=>{const el=document.getElementById("edit_"+fk);if(el){if(!s.data.facts)s.data.facts={};s.data.facts[fk]=el.value.trim();}});
+  s.graded=gradeData(s.data);
   try{
-    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({action:"updateAnswers",testId:"17A",password:teacherPW,rowIndex:s.row,data:s.data})});
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"updateAnswers",testId:"17A",password:teacherPW,rowIndex:s.row,data:s.data,sheetName:s.sheetName})});
     const result=await r.json();
     if(result.error){alert("Error saving: "+result.error);return;}
   }catch(e){alert("Error: "+e.message);return;}
-  closeModal();
-  renderTeacher();
+  closeModal();renderTeacher();
   alert("Answers updated and score recalculated!");
 }
 
-// ============================================================
-// EMAIL PREVIEW  ← FIXED: shows question + student answer for ALL questions
-// ============================================================
 function openEmailPreview(idx){
-  const s = teacherSubs[idx];
-  const g = s.graded;
-  const deduct      = s.unitDeductions || 0;
-  const sketchGrade = (s.sketchGrade !== undefined && s.sketchGrade !== "") ? parseFloat(s.sketchGrade) : 0;
-  const graphGrade  = (s.graphGrade  !== undefined && s.graphGrade  !== "") ? parseFloat(s.graphGrade)  : 0;
-  const adj         = Math.max(0, Math.round((g.total + sketchGrade + graphGrade - deduct) * 100) / 100);
-
-  const sketchStr = (s.sketchGrade !== undefined && s.sketchGrade !== "") ? s.sketchGrade : "__";
-  const graphStr  = (s.graphGrade  !== undefined && s.graphGrade  !== "") ? s.graphGrade  : "__";
-  const ps        = (s.psGrade     !== undefined && s.psGrade     !== "") ? s.psGrade     : "__";
-  const puT       = (s.psGrade     !== undefined && s.psGrade     !== "")
-                      ? (g.factsScore + parseFloat(s.psGrade)).toFixed(2) : "__";
-
-  const unitLine   = deduct > 0 ? `Unit deductions: -${deduct} pts\n` : "";
-  const sketchLine = `Q10 Sketch: ${sketchStr} / 2.5 pts  (teacher graded)\n`;
-  const graphLine  = `Q20 Graph:  ${graphStr} / 2.5 pts  (teacher graded)\n`;
-  const DIVIDER    = "-".repeat(70);
-
-  // All questions — correct AND incorrect — show question text + student answer
-  let questionLines = "";
-  ALL_KEYS.forEach(k => {
-    const r    = g.results[k];
-    const mark = r.correct ? "✓ CORRECT" : "✗ INCORRECT";
-    const pts  = r.correct ? `+${POINTS[k]} pts` : `+0 / ${POINTS[k]} pts`;
-    questionLines += `\n  ${QUESTION_TEXT[k] || k.toUpperCase()}\n`;
-    questionLines += `  Student answer : ${r.answer || "(blank)"}\n`;
-    if (!r.correct) {
-      questionLines += `  Correct answer : ${(ANSWER_KEY[k] || [""])[0]}\n`;
-      questionLines += `  Solution       : ${SOLUTIONS[k] || ""}\n`;
+  const s=teacherSubs[idx];const g=s.graded;
+  const deduct=s.unitDeductions||0;
+  const sketchGrade=(s.sketchGrade!==undefined&&s.sketchGrade!=="")?parseFloat(s.sketchGrade):0;
+  const graphGrade=(s.graphGrade!==undefined&&s.graphGrade!=="")?parseFloat(s.graphGrade):0;
+  const adj=Math.max(0,Math.round((g.total+sketchGrade+graphGrade-deduct)*100)/100);
+  const sketchStr=(s.sketchGrade!==undefined&&s.sketchGrade!=="")?s.sketchGrade:"__";
+  const graphStr=(s.graphGrade!==undefined&&s.graphGrade!=="")?s.graphGrade:"__";
+  const ps=(s.psGrade!==undefined&&s.psGrade!=="")?s.psGrade:"__";
+  const puT=(s.psGrade!==undefined&&s.psGrade!=="")?(g.factsScore+parseFloat(s.psGrade)).toFixed(2):"__";
+  const unitLine=deduct>0?`Unit deductions: -${deduct} pts\n`:"";
+  const DIVIDER="-".repeat(70);
+  let questionLines="";
+  ALL_KEYS.forEach(k=>{
+    const r=g.results[k];
+    const displayCorrect=k==="q14"?"parallelogram":(ANSWER_KEY[k]||[""])[0];
+    questionLines+=`\n  ${QUESTION_TEXT[k]||k.toUpperCase()}\n`;
+    questionLines+=`  Student answer : ${r.answer||"(blank)"}\n`;
+    if(!r.correct){
+      questionLines+=`  Correct answer : ${displayCorrect}\n`;
+      questionLines+=`  Solution       : ${SOLUTIONS[k]||""}\n`;
     }
-    questionLines += `  ${mark}  ${pts}\n`;
-    questionLines += `  ${DIVIDER}\n`;
+    questionLines+=`  ${r.correct?"✓ CORRECT  +"+r.earned+" pts":"✗ INCORRECT  +0 / "+POINTS[k]+" pts"}\n`;
+    questionLines+=`  ${DIVIDER}\n`;
   });
-
-  // Facts table
-  const allFK   = [...FACTS_KEYS_LEFT, ...FACTS_KEYS_RIGHT];
-  const allRows = [...FACTS_ROWS,      ...FACTS_ROWS2];
-  let ft = "  #    PERCENT       DEC ANSWER    FRAC ANSWER   RESULT\n";
-  ft    += "  " + "-".repeat(62) + "\n";
-  for (let i = 0; i < allFK.length; i += 2) {
-    const dfr    = g.factsResults[allFK[i]];
-    const ffr    = g.factsResults[allFK[i+1]];
-    if (!dfr || !ffr) continue;
-    const rowIdx = Math.floor(i / 2);
-    const pctLbl = allRows[rowIdx] ? allRows[rowIdx].pct : "";
-    let result   = "";
-    if (dfr.correct && ffr.correct) {
-      result = "✓";
-    } else {
-      if (!dfr.correct) result += `dec ✗ (${dfr.expected})  `;
-      if (!ffr.correct) result += `frac ✗ (${ffr.expected})`;
-    }
-    ft += "  " + (rowIdx + 1 + ".").padEnd(4)
-        + pctLbl.padEnd(14)
-        + (dfr.answer || "(blank)").padEnd(14)
-        + (ffr.answer || "(blank)").padEnd(14)
-        + result.trim() + "\n";
+  const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
+  const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
+  let ft="  #    PERCENT       DEC ANSWER    FRAC ANSWER   RESULT\n";
+  ft+="  "+"-".repeat(62)+"\n";
+  for(let i=0;i<allFK.length;i+=2){
+    const dfr=g.factsResults[allFK[i]];const ffr=g.factsResults[allFK[i+1]];
+    if(!dfr||!ffr)continue;
+    const rowIdx=Math.floor(i/2);const pctLbl=allRows[rowIdx]?allRows[rowIdx].pct:"";
+    let result="";
+    if(dfr.correct&&ffr.correct){result="✓";}
+    else{if(!dfr.correct)result+=`dec ✗ (${dfr.expected})  `;if(!ffr.correct)result+=`frac ✗ (${ffr.expected})`;}
+    ft+="  "+(rowIdx+1+".").padEnd(4)+pctLbl.padEnd(14)+(dfr.answer||"(blank)").padEnd(14)+(ffr.answer||"(blank)").padEnd(14)+result.trim()+"\n";
   }
-
-  const body =
-`Dear Parent/Guardian,
-
-${s.name} has completed Saxon Math Course 2 — Cumulative Test 17A.
-
-${"=".repeat(54)}
-TEST QUESTIONS (Q1–Q20)
-${"=".repeat(54)}
-Final Score: ${adj} / 100
-${unitLine}${sketchLine}${graphLine}
-${questionLines}
-${"=".repeat(54)}
-POWER UP (graded out of 10)
-${"=".repeat(54)}
-Facts:            ${g.factsScore} / 5  (${g.factsCorrect}/24 correct)
-Problem Solving:  ${ps} / 5  (teacher graded)
-TOTAL POWER UP:   ${g.factsScore} + ${ps} = ${puT} / 10
-
-FACTS DETAIL (Percent → Decimal & Fraction):
-${ft}
-PROBLEM SOLVING (teacher graded, 5 pts total):
-  Understand (1 pt):  ${g.pu_understand || "--"}
-  Plan       (1 pt):  ${g.pu_plan       || "--"}
-  Solve      (2 pts): ${g.pu_solve      || "--"}
-  Check      (1 pt):  ${g.pu_check      || "--"}
-  Correct Answer: Full circle A=3.14(4)²=50.24 m². Chained at garage center → half circle ≈ 25 sq m.
-
-${"=".repeat(54)}
-Please let me know if you notice any discrepancies so I can review them promptly.
-
-Best regards,
-Mrs. West`;
-
-  const html = `<strong>Subject:</strong> Saxon Math Test 17A Results — ${s.name}<br>
-    <hr style="margin:10px 0;"/>
-    <pre style="font-size:.82rem;">${body}</pre>`;
-
-  openModal(html, "Copy to Clipboard", () => {
-    navigator.clipboard.writeText(body)
-      .then(() => alert("Copied!"))
-      .catch(() => alert("Copy failed."));
-  });
+  const body=`Dear Parent/Guardian,\n\n${s.name} has completed Saxon Math Course 2 — Cumulative Test 17A.\n\n${"=".repeat(54)}\nTEST QUESTIONS (Q1–Q20)\n${"=".repeat(54)}\nFinal Score: ${adj} / 100\n${unitLine}Q10 Sketch: ${sketchStr} / 2.5 pts  (teacher graded)\nQ20 Graph:  ${graphStr} / 2.5 pts  (teacher graded)\n${questionLines}\n${"=".repeat(54)}\nPOWER UP (graded out of 10)\n${"=".repeat(54)}\nFacts:            ${g.factsScore} / 5  (${g.factsCorrect}/24 correct)\nProblem Solving:  ${ps} / 5  (teacher graded)\nTOTAL POWER UP:   ${g.factsScore} + ${ps} = ${puT} / 10\n\nFACTS DETAIL:\n${ft}\nPROBLEM SOLVING:\n  Understand: ${g.pu_understand||"--"}\n  Plan:       ${g.pu_plan||"--"}\n  Solve:      ${g.pu_solve||"--"}\n  Check:      ${g.pu_check||"--"}\n\n${"=".repeat(54)}\nPlease let me know if you notice any discrepancies.\n\nBest regards,\nMrs. West`;
+  const html=`<strong>Subject:</strong> Saxon Math Test 17A Results — ${s.name}<hr style="margin:10px 0;"/><pre style="font-size:.82rem;">${body}</pre>`;
+  openModal(html,"Copy to Clipboard",()=>{ navigator.clipboard.writeText(body).then(()=>alert("Copied!")).catch(()=>alert("Copy failed.")); });
 }
 
 async function sendEmail(idx){
   const s=teacherSubs[idx];
   if(s.psGrade===undefined||s.psGrade===""){if(!confirm("Problem Solving grade not entered yet. Send anyway?"))return;}
   if(!confirm("Send email to parents/guardians for "+s.name+"?"))return;
+
+  // Build the same email body the preview shows — with the live recalculated score
+  const g=s.graded;
+  const deduct=s.unitDeductions||0;
+  const sketchGrade=(s.sketchGrade!==undefined&&s.sketchGrade!=="")?parseFloat(s.sketchGrade):0;
+  const graphGrade=(s.graphGrade!==undefined&&s.graphGrade!=="")?parseFloat(s.graphGrade):0;
+  const adj=Math.max(0,Math.round((g.total+sketchGrade+graphGrade-deduct)*100)/100);
+  const sketchStr=(s.sketchGrade!==undefined&&s.sketchGrade!=="")?s.sketchGrade:"__";
+  const graphStr=(s.graphGrade!==undefined&&s.graphGrade!=="")?s.graphGrade:"__";
+  const ps=(s.psGrade!==undefined&&s.psGrade!=="")?s.psGrade:"__";
+  const puT=(s.psGrade!==undefined&&s.psGrade!=="")?(g.factsScore+parseFloat(s.psGrade)).toFixed(2):"__";
+  const unitLine=deduct>0?`Unit deductions: -${deduct} pts\n`:"";
+  const DIVIDER="-".repeat(70);
+  let questionLines="";
+  ALL_KEYS.forEach(k=>{
+    const r=g.results[k];
+    const displayCorrect=k==="q14"?"parallelogram":(ANSWER_KEY[k]||[""])[0];
+    questionLines+=`\n  ${QUESTION_TEXT[k]||k.toUpperCase()}\n`;
+    questionLines+=`  Student answer : ${r.answer||"(blank)"}\n`;
+    if(!r.correct){
+      questionLines+=`  Correct answer : ${displayCorrect}\n`;
+      questionLines+=`  Solution       : ${SOLUTIONS[k]||""}\n`;
+    }
+    questionLines+=`  ${r.correct?"✓ CORRECT  +"+r.earned+" pts":"✗ INCORRECT  +0 / "+POINTS[k]+" pts"}\n`;
+    questionLines+=`  ${DIVIDER}\n`;
+  });
+  const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
+  const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
+  let ft="  #    PERCENT       DEC ANSWER    FRAC ANSWER   RESULT\n";
+  ft+="  "+"-".repeat(62)+"\n";
+  for(let i=0;i<allFK.length;i+=2){
+    const dfr=g.factsResults[allFK[i]];const ffr=g.factsResults[allFK[i+1]];
+    if(!dfr||!ffr)continue;
+    const rowIdx=Math.floor(i/2);const pctLbl=allRows[rowIdx]?allRows[rowIdx].pct:"";
+    let result="";
+    if(dfr.correct&&ffr.correct){result="✓";}
+    else{if(!dfr.correct)result+=`dec ✗ (${dfr.expected})  `;if(!ffr.correct)result+=`frac ✗ (${ffr.expected})`;}
+    ft+="  "+(rowIdx+1+".").padEnd(4)+pctLbl.padEnd(14)+(dfr.answer||"(blank)").padEnd(14)+(ffr.answer||"(blank)").padEnd(14)+result.trim()+"\n";
+  }
+  const emailBody=`Dear Parent/Guardian,\n\n${s.name} has completed Saxon Math Course 2 — Cumulative Test 17A.\n\n${"=".repeat(54)}\nTEST QUESTIONS (Q1–Q20)\n${"=".repeat(54)}\nFinal Score: ${adj} / 100\n${unitLine}Q10 Sketch: ${sketchStr} / 2.5 pts  (teacher graded)\nQ20 Graph:  ${graphStr} / 2.5 pts  (teacher graded)\n${questionLines}\n${"=".repeat(54)}\nPOWER UP (graded out of 10)\n${"=".repeat(54)}\nFacts:            ${g.factsScore} / 5  (${g.factsCorrect}/24 correct)\nProblem Solving:  ${ps} / 5  (teacher graded)\nTOTAL POWER UP:   ${g.factsScore} + ${ps} = ${puT} / 10\n\nFACTS DETAIL:\n${ft}\nPROBLEM SOLVING:\n  Understand: ${g.pu_understand||"--"}\n  Plan:       ${g.pu_plan||"--"}\n  Solve:      ${g.pu_solve||"--"}\n  Check:      ${g.pu_check||"--"}\n\n${"=".repeat(54)}\nPlease let me know if you notice any discrepancies.\n\nBest regards,\nMrs. West`;
+
   try{
-    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"sendEmail",testId:"17A",password:teacherPW,rowIndex:s.row})});
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+      action:"sendEmail",
+      testId:"17A",
+      password:teacherPW,
+      rowIndex:s.row,
+      sheetName:s.sheetName,
+      finalScore:adj,
+      factsScore:g.factsScore,
+      psGrade:ps,
+      emailBody:emailBody
+    })});
     const data=await r.json();
     if(data.error){alert("Error: "+data.error);return;}
-    alert("Email sent to "+s.emails.join(", ")+"!");
+    alert("Email sent to "+(s.emails||[]).join(", ")+"!");
     teacherSubs[idx].emailSent=true;renderTeacher();
   }catch(e){alert("Error: "+e.message);}
 }
@@ -1234,16 +1126,13 @@ async function sendEmail(idx){
 async function confirmDel(idx){
   if(!confirm("Delete submission for "+teacherSubs[idx].name+"? This cannot be undone."))return;
   try{
-    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"deleteSubmission",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row})});
+    const r=await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"deleteSubmission",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,sheetName:teacherSubs[idx].sheetName})});
     const data=await r.json();
     if(data.error){alert("Error: "+data.error);return;}
     teacherSubs.splice(idx,1);renderTeacher();
   }catch(e){alert("Error: "+e.message);}
 }
 
-// ============================================================
-// MODAL
-// ============================================================
 function openModal(html,btnLabel,btnFn){
   document.getElementById("modal-content").innerHTML=html;
   const btn=document.getElementById("modal-action-btn");
@@ -1253,13 +1142,15 @@ function openModal(html,btnLabel,btnFn){
 }
 function closeModal(){document.getElementById("the-modal").classList.remove("open");}
 
-// ============================================================
-// INIT
-// ============================================================
 function init(){
   document.getElementById("inp-date").value=new Date().toISOString().split("T")[0];
   const sel=document.getElementById("sel-name");
-  ROSTER_NAMES.slice().sort().forEach(n=>{const o=document.createElement("option");o.value=o.textContent=n;sel.appendChild(o);});
+  const grpBlue = document.createElement("optgroup"); grpBlue.label="🔵 TEAM BLUE";
+  TEAM_BLUE.slice().sort().forEach(n=>{const o=document.createElement("option");o.value=o.textContent=n;grpBlue.appendChild(o);});
+  sel.appendChild(grpBlue);
+  const grpRed = document.createElement("optgroup"); grpRed.label="🔴 TEAM RED";
+  TEAM_RED.slice().sort().forEach(n=>{const o=document.createElement("option");o.value=o.textContent=n;grpRed.appendChild(o);});
+  sel.appendChild(grpRed);
   buildForm();
   showPage("page-start");
 }
