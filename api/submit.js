@@ -19,6 +19,18 @@ const FACTS_LABELS_17 = [
   "66.7%_dec","66.7%_frac","1%_dec","1%_frac","250%_dec","250%_frac"
 ];
 
+// ── Team rosters ──────────────────────────────────────────────
+const TEAM_BLUE = [
+  "Aarohi Agrawal","Alisha Agrawal","Ananya Arvind","Elizabeth Cai","Eloisa Keojampa",
+  "Eric Huang","Erin Yuen","Evan Chang","Jenny Montgomery","Jooha Park",
+  "Leo Matsiev","Maya Benavidez","Nathan Streeter","Peyton Pereira","Rynshall Chen",
+  "Samiha Java","Tate Yeung","Thea Angelidis-Smith","Vassilis Papadimitriou"
+];
+
+function getSheet17Name(studentName) {
+  return TEAM_BLUE.includes(studentName) ? "Responses17A_Blue" : "Responses17A_Red";
+}
+
 function getAuth() {
   const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
   if (!key) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY env var not set");
@@ -36,36 +48,6 @@ function getTransporter() {
     secure: process.env.SMTP_SECURE === "true",
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
   });
-}
-
-async function emailPhotosToTeacher(studentName, photos) {
-  try {
-    const attachments = photos.map((dataUrl, i) => {
-      const matches = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
-      if (!matches) return null;
-      const mimeType = matches[1];
-      const ext = mimeType.includes("png") ? "png" : "jpg";
-      return {
-        filename: `${studentName}_Test17A_Photo${i+1}.${ext}`,
-        content: matches[2],
-        encoding: "base64",
-        contentType: mimeType
-      };
-    }).filter(Boolean);
-
-    if (attachments.length === 0) return;
-
-    const transporter = getTransporter();
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: TEACHER_EMAIL,
-      subject: `Test 17A Photos — ${studentName}`,
-      text: `${studentName} has submitted Test 17A and attached ${attachments.length} photo(s) of their paper test.`,
-      attachments
-    });
-  } catch (err) {
-    console.error("Photo email failed:", err.message);
-  }
 }
 
 async function updateSchoologyGrades(studentName, pct, testTabName) {
@@ -108,6 +90,23 @@ async function updateSchoologyGrades(studentName, pct, testTabName) {
   }
 }
 
+const HEADER_17 = [
+  "Timestamp","Name","Date","Score","Percent","Letter",
+  "Q1","Q2a","Q2b","Q2c","Q2d",
+  "Q3","Q4","Q5","Q6","Q7","Q8",
+  "Q9a","Q9b","Q10_volume","Q11",
+  "Q12a","Q12b","Q12c","Q12d",
+  "Q13_coeff","Q13_exp",
+  "Q14_name","Q14_perim","Q15",
+  "Q16","Q17","Q18","Q19",
+  "Q20a","Q20b","Q20c",
+  "FactsScore",
+  ...FACTS_LABELS_17,
+  "PU_Understand","PU_Plan","PU_Solve","PU_Check",
+  "UnitDeductions","PsGrade","SketchGrade","GraphGrade",
+  "PhotosEmailed"
+];
+
 module.exports = async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -118,10 +117,15 @@ module.exports = async (req, res) => {
   try {
     const data = req.body;
     const testId = data.testId || "16A";
-    const sheetName = testId === "17A" ? "Responses17A" : DEFAULT_SHEET;
+
+    // ── Route 17A submissions by team ──
+    const sheetName = testId === "17A"
+      ? getSheet17Name(data.name)
+      : DEFAULT_SHEET;
 
     await ensureSheetExists(sheetName);
 
+    // Duplicate check
     const rows = await getRows(sheetName);
     if (rows.length > 1) {
       for (let i = 1; i < rows.length; i++) {
@@ -136,29 +140,9 @@ module.exports = async (req, res) => {
       : gradeData(data);
 
     if (testId === "17A") {
-      // Email photos to teacher if provided
-      const photos = Array.isArray(data.photos) ? data.photos.slice(0, 6) : [];
-      if (photos.length > 0) {
-        await emailPhotosToTeacher(data.name, photos);
-      }
-
+      // Write header row if sheet is empty
       if (rows.length === 0) {
-        await appendRow([
-          "Timestamp","Name","Date","Score","Percent","Letter",
-          "Q1","Q2a","Q2b","Q2c","Q2d",
-          "Q3","Q4","Q5","Q6","Q7","Q8",
-          "Q9a","Q9b","Q10_volume","Q11",
-          "Q12a","Q12b","Q12c","Q12d",
-          "Q13_coeff","Q13_exp",
-          "Q14_name","Q14_perim","Q15",
-          "Q16","Q17","Q18","Q19",
-          "Q20a","Q20b","Q20c",
-          "FactsScore",
-          ...FACTS_LABELS_17,
-          "PU_Understand","PU_Plan","PU_Solve","PU_Check",
-          "UnitDeductions","PsGrade","SketchGrade","GraphGrade",
-          "PhotosEmailed"
-        ], sheetName);
+        await appendRow(HEADER_17, sheetName);
       }
 
       const factsRow = FACTS_KEYS_17.map(k => (data.facts||{})[k]||"");
@@ -179,11 +163,12 @@ module.exports = async (req, res) => {
         graded.factsScore,
         ...factsRow,
         data.pu_understand||"", data.pu_plan||"", data.pu_solve||"", data.pu_check||"",
-        0, "", "", "",
-        photos.length > 0 ? `Yes (${photos.length} photo${photos.length>1?'s':''})` : "No"
+        0, "", "", "", "No"
       ], sheetName);
 
-      await updateSchoologyGrades(data.name, graded.pct, "Test17A");
+      // Schoology tab named by team
+      const schoologyTab = TEAM_BLUE.includes(data.name) ? "Test17A_Blue" : "Test17A_Red";
+      await updateSchoologyGrades(data.name, graded.pct, schoologyTab);
 
     } else {
       if (rows.length === 0) {
