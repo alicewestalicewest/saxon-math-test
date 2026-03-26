@@ -125,22 +125,22 @@
     <p style="font-weight:600;margin-bottom:12px;color:#374151;">A goat is kept on a 4-meter chain connected to a metal hook in the ground. Approximately what area of grass can she eat? If she is chained at the center of the 8-m side of the garage, what area of grass can she eat?</p>
     <div class="grid2">
       <div class="q-group">
-        <label class="q-label">Understand</label>
+        <label class="q-label">1. Understand</label>
         <span class="q-hint" style="margin-bottom:4px;">What information am I given? What am I asked to find or do?</span>
         <textarea id="pu_understand" rows="3" placeholder="Write here..."></textarea>
       </div>
       <div class="q-group">
-        <label class="q-label">Plan</label>
+        <label class="q-label">2. Plan</label>
         <span class="q-hint" style="margin-bottom:4px;">How can I use the information I am given? Which strategy should I try?</span>
         <textarea id="pu_plan" rows="3" placeholder="Write here..."></textarea>
       </div>
       <div class="q-group">
-        <label class="q-label">Solve</label>
+        <label class="q-label">3. Solve</label>
         <span class="q-hint" style="margin-bottom:4px;">Did I follow the plan? Did I show my work? Did I write the answer?</span>
         <textarea id="pu_solve" rows="3" placeholder="Write here..."></textarea>
       </div>
       <div class="q-group">
-        <label class="q-label">Check</label>
+        <label class="q-label">4. Check</label>
         <span class="q-hint" style="margin-bottom:4px;">Did I use the correct information? Did I do what was asked? Is my answer reasonable?</span>
         <textarea id="pu_check" rows="3" placeholder="Write here..."></textarea>
       </div>
@@ -808,7 +808,7 @@ function showResults(g){
 }
 
 // TEACHER
-let teacherPW="", teacherSubs=[], sentSet=new Set();
+let teacherPW="", teacherSubs=[], sentSet=new Set(), teacherTeamFilter="all";
 async function teacherLogin(){
   const pw=document.getElementById("teacher-pw").value;
   const btn=document.querySelector("#teacher-login-form .btn-primary");
@@ -846,12 +846,29 @@ async function saveGraphGrade(idx,val){
   try{await fetch("/api/teacher",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"saveGraphGrade",testId:"17A",password:teacherPW,rowIndex:teacherSubs[idx].row,graphGrade:parseFloat(val)||0,sheetName:teacherSubs[idx].sheetName})});}catch(e){console.warn(e);}
   renderTeacher();
 }
+function setTeacherTeam(t){
+  teacherTeamFilter=t;
+  ["all","blue","red"].forEach(x=>{
+    const el=document.getElementById("tteam-"+x);
+    if(el) el.style.cssText=x===t
+      ?`padding:6px 16px;border-radius:20px;font-size:.82rem;font-weight:700;cursor:pointer;border:2px solid #2563eb;background:${x==="blue"?"#dbeafe":x==="red"?"#fee2e2":"#e0e7ff"};color:${x==="blue"?"#1d4ed8":x==="red"?"#dc2626":"#2563eb"};`
+      :`padding:6px 16px;border-radius:20px;font-size:.82rem;font-weight:700;cursor:pointer;border:2px solid #e2e8f0;background:${x==="blue"?"#dbeafe":x==="red"?"#fee2e2":"#f1f5f9"};color:${x==="blue"?"#1d4ed8":x==="red"?"#dc2626":"#374151"};`;
+  });
+  renderTeacher();
+}
 function renderTeacher(){
   const el=document.getElementById("teacher-table");
   if(teacherSubs.length===0){el.innerHTML='<p style="color:#6b7280;padding:12px 0;">No submissions yet.</p>';return;}
+  const filtered = teacherTeamFilter==="all" ? teacherSubs
+    : teacherSubs.filter(s=>(teacherTeamFilter==="blue"?TEAM_BLUE.includes(s.name):!TEAM_BLUE.includes(s.name)));
   let html=`
-  <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+  <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
     <button class="btn btn-gray" style="font-size:.82rem;" onclick="exportCSV()">📥 Export CSV (Blue + Red)</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <span id="tteam-all" onclick="setTeacherTeam('all')" style="padding:6px 16px;border-radius:20px;font-size:.82rem;font-weight:700;cursor:pointer;border:2px solid #2563eb;background:#e0e7ff;color:#2563eb;">All</span>
+      <span id="tteam-blue" onclick="setTeacherTeam('blue')" style="padding:6px 16px;border-radius:20px;font-size:.82rem;font-weight:700;cursor:pointer;border:2px solid #e2e8f0;background:#dbeafe;color:#1d4ed8;">🔵 Team Blue</span>
+      <span id="tteam-red" onclick="setTeacherTeam('red')" style="padding:6px 16px;border-radius:20px;font-size:.82rem;font-weight:700;cursor:pointer;border:2px solid #e2e8f0;background:#fee2e2;color:#dc2626;">🔴 Team Red</span>
+    </div>
   </div>
   <table style="width:100%;border-collapse:collapse;font-size:.9rem;margin-bottom:20px;">
     <thead><tr style="background:#f1f5f9;">
@@ -864,7 +881,8 @@ function renderTeacher(){
       <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;min-width:110px;">PS Grade /5</th>
       <th style="padding:9px;text-align:center;border:1px solid #e2e8f0;">Actions</th>
     </tr></thead><tbody>`;
-  teacherSubs.forEach((s,i)=>{
+  filtered.forEach((s)=>{
+    const i=teacherSubs.indexOf(s);
     const g=s.graded;
     const deduct=s.unitDeductions||0;
     const sketchGrade=s.sketchGrade!==undefined&&s.sketchGrade!==""?parseFloat(s.sketchGrade):0;
@@ -912,46 +930,78 @@ function openAnswerGrid(idx){
   const sketchGrade=s.sketchGrade!==undefined&&s.sketchGrade!==""?parseFloat(s.sketchGrade):0;
   const graphGrade=s.graphGrade!==undefined&&s.graphGrade!==""?parseFloat(s.graphGrade):0;
   const adj=Math.max(0,Math.round((g.total+sketchGrade+graphGrade-deduct)*100)/100);
-  let html=`<h3 style="margin-bottom:10px;">📋 ${s.name}</h3>
-  <p style="font-size:.85rem;color:#475569;margin-bottom:14px;">Q1–Q20: <strong>${adj}/100</strong> &nbsp;·&nbsp; Facts: <strong>${g.factsScore}/5</strong> (${g.factsCorrect}/24)</p>
-  <div style="overflow-x:auto;"><table class="ans-grid"><thead><tr>`;
-  GRID_COLS.forEach(c=>{html+=`<th>${c.l}</th>`;});
-  html+=`</tr></thead><tbody><tr>`;
-  GRID_COLS.forEach(c=>{
-    const r=g.results[c.k];
-    const ck=c.k==="q14"?"parallelogram":(ANSWER_KEY[c.k]||[""])[0];
-    html+=`<td class="${r.correct?'ans-ok':'ans-wrong'}"><div class="ans-student">${r.answer||'—'}</div>${!r.correct?`<div class="ans-key">✔ ${ck}</div>`:''}</td>`;
-  });
-  html+=`</tr></tbody></table></div>`;
-  const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
-  const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
-  html+=`<div style="font-weight:700;font-size:.88rem;color:#374151;margin:18px 0 6px;">⚡ Power-Up Facts (${g.factsCorrect}/24 correct — ${g.factsScore}/5 pts)</div>
-  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.82rem;">
-  <thead><tr style="background:#f1f5f9;">
-    <th style="padding:6px 8px;border:1px solid #e2e8f0;">%</th>
-    <th style="padding:6px 8px;border:1px solid #e2e8f0;">Type</th>
-    <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;">Student</th>
-    <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;">Correct</th>
-    <th style="padding:6px 8px;border:1px solid #e2e8f0;text-align:center;">✓/✗</th>
-  </tr></thead><tbody>`;
-  allFK.forEach((fk,i)=>{
-    const fr=g.factsResults[fk];if(!fr)return;
-    const rowIdx=Math.floor(i/2);const isD=(i%2===0);
-    html+=`<tr style="background:${fr.correct?'#f0fdf4':'#fff1f2'};">
-      <td style="padding:5px 8px;border:1px solid #e2e8f0;font-weight:700;">${allRows[rowIdx]?allRows[rowIdx].pct:''}</td>
-      <td style="padding:5px 8px;border:1px solid #e2e8f0;">${isD?'Decimal':'Fraction'}</td>
-      <td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:center;font-weight:700;">${fr.answer||'—'}</td>
-      <td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:center;color:#16a34a;font-weight:700;">${fr.expected}</td>
-      <td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:center;">${fr.correct?'<span style="color:#16a34a;">✓</span>':'<span style="color:#dc2626;">✗</span>'}</td>
+  const team=getTeam(s.name);
+  const teamBadge=`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700;${team==="TEAM BLUE"?"background:#dbeafe;color:#1d4ed8;":"background:#fee2e2;color:#dc2626;"}">${team==="TEAM BLUE"?"🔵 BLUE":"🔴 RED"}</span>`;
+
+  let html=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <span style="font-size:1.4rem;">📋</span>
+    <h3 style="font-size:1.1rem;">${s.name} — ${adj}/100</h3>
+    ${teamBadge}
+  </div>
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+    <thead><tr style="background:#f1f5f9;">
+      <th style="padding:8px 12px;border:1px solid #e2e8f0;width:55px;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;">Q</th>
+      <th style="padding:8px 12px;border:1px solid #e2e8f0;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;">Question</th>
+      <th style="padding:8px 12px;border:1px solid #e2e8f0;width:120px;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;">Student</th>
+      <th style="padding:8px 12px;border:1px solid #e2e8f0;width:120px;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;">Correct</th>
+      <th style="padding:8px 12px;border:1px solid #e2e8f0;width:40px;font-size:.75rem;text-align:center;">✓/✗</th>
+    </tr></thead><tbody>`;
+  ALL_KEYS.forEach(k=>{
+    const r=g.results[k];
+    const ck=k==="q14"?"parallelogram":(ANSWER_KEY[k]||[""])[0];
+    const bg=r.correct?'#f0fdf4':'#fff1f2';
+    html+=`<tr style="background:${bg};">
+      <td style="padding:9px 12px;border:1px solid #e2e8f0;font-weight:800;font-size:.82rem;">${k.toUpperCase()}</td>
+      <td style="padding:9px 12px;border:1px solid #e2e8f0;font-size:.83rem;">${QUESTION_TEXT[k]||""}</td>
+      <td style="padding:9px 12px;border:1px solid #e2e8f0;font-weight:700;">${r.answer||'—'}</td>
+      <td style="padding:9px 12px;border:1px solid #e2e8f0;color:#16a34a;font-weight:600;">${ck}</td>
+      <td style="padding:9px 12px;border:1px solid #e2e8f0;text-align:center;font-size:1.1rem;">${r.correct?'<span style="color:#16a34a;">✓</span>':'<span style="color:#dc2626;">✗</span>'}</td>
     </tr>`;
+    if(!r.correct&&SOLUTIONS[k]){
+      html+=`<tr style="background:#fff1f2;"><td></td><td colspan="4" style="padding:3px 12px 8px;font-size:.78rem;color:#64748b;font-style:italic;">💡 ${SOLUTIONS[k]}</td></tr>`;
+    }
   });
   html+=`</tbody></table></div>`;
-  html+=`<div style="font-weight:700;font-size:.88rem;color:#374151;margin:16px 0 6px;">Problem Solving (teacher graded)</div>
+
+  // Facts
+  const allFK=[...FACTS_KEYS_LEFT,...FACTS_KEYS_RIGHT];
+  const allRows=[...FACTS_ROWS,...FACTS_ROWS2];
+  html+=`<div style="font-weight:700;font-size:.88rem;color:#374151;margin:18px 0 8px;">⚡ Power-Up Facts — ${g.factsScore}/5 pts (${g.factsCorrect}/24 correct)</div>
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+  <thead><tr style="background:#f1f5f9;">
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;">#</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;">Percent</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;">Student Dec</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;">Correct Dec</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;">Student Frac</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;">Correct Frac</th>
+    <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">✓/✗</th>
+  </tr></thead><tbody>`;
+  for(let i=0;i<allFK.length;i+=2){
+    const dfk=allFK[i],ffk=allFK[i+1];
+    const dfr=g.factsResults[dfk],ffr=g.factsResults[ffk];
+    if(!dfr||!ffr)continue;
+    const rowIdx=Math.floor(i/2);
+    const ok=dfr.correct&&ffr.correct;
+    html+=`<tr style="background:${ok?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;">${rowIdx+1}.</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:600;">${allRows[rowIdx]?allRows[rowIdx].pct:''}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;">${dfr.answer||'—'}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;color:#16a34a;font-weight:600;">${dfr.expected}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;">${ffr.answer||'—'}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;color:#16a34a;font-weight:600;">${ffr.expected}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-size:1.1rem;">${ok?'<span style="color:#16a34a;">✓</span>':'<span style="color:#dc2626;">✗</span>'}</td>
+    </tr>`;
+  }
+  html+=`</tbody></table></div>`;
+
+  // Problem solving
+  html+=`<div style="font-weight:700;font-size:.88rem;color:#374151;margin:16px 0 6px;">📝 Problem Solving (teacher graded)</div>
   <table style="width:100%;font-size:.85rem;border-collapse:collapse;border:1px solid #e2e8f0;">
-    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;width:100px;">Understand</td><td style="padding:6px 10px;">${g.pu_understand||'—'}</td></tr>
-    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">Plan</td><td style="padding:6px 10px;">${g.pu_plan||'—'}</td></tr>
-    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">Solve</td><td style="padding:6px 10px;">${g.pu_solve||'—'}</td></tr>
-    <tr><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">Check</td><td style="padding:6px 10px;">${g.pu_check||'—'}</td></tr>
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;width:120px;">1. Understand</td><td style="padding:6px 10px;">${g.pu_understand||'—'}</td></tr>
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">2. Plan</td><td style="padding:6px 10px;">${g.pu_plan||'—'}</td></tr>
+    <tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">3. Solve</td><td style="padding:6px 10px;">${g.pu_solve||'—'}</td></tr>
+    <tr><td style="padding:6px 10px;font-weight:600;background:#f8fafc;">4. Check</td><td style="padding:6px 10px;">${g.pu_check||'—'}</td></tr>
   </table>`;
   if(s.photosEmailed){
     html+=`<div style="margin-top:18px;padding:10px 14px;background:#f0fdf4;border-radius:8px;border:1.5px solid #86efac;">
