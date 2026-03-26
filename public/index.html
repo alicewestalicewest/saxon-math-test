@@ -1197,10 +1197,11 @@ async function confirmDel(idx){
 }
 
 function exportCSV(){
-  function buildCSV(teamName, subs){
-    let csv=`TEAM ${teamName.toUpperCase()} — Test 17A Grades\n`;
-    csv+="Student,Date,Raw Score /100,Sketch /2.5,Graph /2.5,Deduction,Adjusted Score /100,Grade,Facts /5,Problem Solving /5,Total Power Up /10\n";
-    subs.forEach(s=>{
+  const blueSubs=teacherSubs.filter(s=>TEAM_BLUE.includes(s.name));
+  const redSubs =teacherSubs.filter(s=>!TEAM_BLUE.includes(s.name));
+
+  function buildRows(subs){
+    return subs.map(s=>{
       const g=s.graded;
       const deduct=s.unitDeductions||0;
       const sk=s.sketchGrade!==undefined&&s.sketchGrade!==""?parseFloat(s.sketchGrade):0;
@@ -1210,22 +1211,25 @@ function exportCSV(){
       const letter=pct>=90?"A":pct>=80?"B":pct>=70?"C":pct>=60?"D":"F";
       const ps=s.psGrade!==undefined&&s.psGrade!==""?s.psGrade:"";
       const puTotal=ps!==""?(g.factsScore+parseFloat(ps)).toFixed(2):"";
-      csv+=`"${s.name}","${s.date||""}",${g.total},${sk},${gr},${deduct},${adj},${letter},${g.factsScore},"${ps}","${puTotal}"\n`;
-    });
-    return csv;
+      const team=TEAM_BLUE.includes(s.name)?"BLUE":"RED";
+      return `"${s.name}","${team}","${s.date||""}",${g.total},${sk},${gr},${deduct},${adj},${letter},${g.factsScore},"${ps}","${puTotal}"`;
+    }).join("\n");
   }
-  function download(filename, content){
-    const a=document.createElement("a");
-    a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(content);
-    a.download=filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-  const blueSubs=teacherSubs.filter(s=>TEAM_BLUE.includes(s.name));
-  const redSubs =teacherSubs.filter(s=>!TEAM_BLUE.includes(s.name));
-  download("test17a-team-blue-grades.csv", buildCSV("Blue", blueSubs));
-  setTimeout(()=>download("test17a-team-red-grades.csv", buildCSV("Red", redSubs)), 800);
+
+  const header="Student,Team,Date,Raw Score /100,Sketch /2.5,Graph /2.5,Deduction,Adjusted Score /100,Grade,Facts /5,Problem Solving /5,Total Power Up /10";
+  let csv="TEST 17A GRADES — TEAM BLUE\n";
+  csv+=header+"\n";
+  csv+=buildRows(blueSubs);
+  csv+="\n\nTEST 17A GRADES — TEAM RED\n";
+  csv+=header+"\n";
+  csv+=buildRows(redSubs);
+
+  const a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download="test17a-all-grades.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function openModal(html,btnLabel,btnFn){
