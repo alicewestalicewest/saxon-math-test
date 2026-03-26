@@ -153,14 +153,16 @@ module.exports = async (req, res) => {
   try {
     if (action === "getData") {
       if (is17) {
-        // Load both tabs and merge, tagging each row with its sheetName
-        const [rowsBlue, rowsRed] = await Promise.all([
+        // Load all three tabs — original + Blue + Red — so no submissions are lost
+        const [rowsOrig, rowsBlue, rowsRed] = await Promise.all([
+          getRows("Responses17A").catch(()=>[]),
           getRows("Responses17A_Blue").catch(()=>[]),
           getRows("Responses17A_Red").catch(()=>[])
         ]);
+        const orig = parseRows17(rowsOrig, "Responses17A");
         const blue = parseRows17(rowsBlue, "Responses17A_Blue");
         const red  = parseRows17(rowsRed,  "Responses17A_Red");
-        return res.json([...blue, ...red]);
+        return res.json([...orig, ...blue, ...red]);
       } else {
         const rows = await getRows(DEFAULT_SHEET);
         return res.json(parseRows16(rows));
@@ -170,7 +172,7 @@ module.exports = async (req, res) => {
     // For all mutation actions on 17A, determine which sheet from the request
     // The frontend now passes sheetName for 17A actions
     const sheetName = is17
-      ? (req.body.sheetName || "Responses17A_Blue")
+      ? (req.body.sheetName || "Responses17A")
       : DEFAULT_SHEET;
 
     if (action === "saveDeduction") {
