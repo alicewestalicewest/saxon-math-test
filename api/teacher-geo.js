@@ -76,8 +76,9 @@ async function sendParentEmail(name, graded) {
     </div>`;
 
   await transporter.sendMail({
-    from: process.env.GMAIL_USER,
-    to: process.env.PARENT_EMAIL_LIST || process.env.GMAIL_USER, // adjust as needed
+    from: `"Alice West" <${process.env.GMAIL_USER}>`,
+    replyTo: 'awest1@stratfordschools.com',
+    to: process.env.PARENT_EMAIL_LIST || process.env.GMAIL_USER,
     subject: `Geography Assessment Results — ${name}`,
     html
   });
