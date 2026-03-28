@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Teacher Dashboard — US Geography Assessment</title>
+<style>
+:root { --blue:#2563eb; --blue-dark:#1d4ed8; --green:#16a34a; --red:#dc2626; --gray:#6b7280; --bg:#f8fafc; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Segoe UI',Arial,sans-serif; background:var(--bg); color:#1e293b; }
+header { background:var(--blue); color:#fff; padding:16px 24px; display:flex; align-items:center; gap:12px; }
+header h1 { font-size:1.3rem; }
+.container { max-width:1100px; margin:0 auto; padding:24px 16px; }
+.card { background:#fff; border-radius:12px; box-shadow:0 1px 6px #0001; padding:24px; margin-bottom:20px; }
+label { display:block; font-weight:600; margin-bottom:4px; font-size:.93rem; }
+input, select, textarea { width:100%; padding:9px 12px; border:1.5px solid #d1d5db; border-radius:7px; font-size:.97rem; transition:border .2s; }
+input:focus, select:focus { outline:none; border-color:var(--blue); }
+.btn { padding:10px 22px; border:none; border-radius:8px; font-size:.97rem; font-weight:600; cursor:pointer; transition:background .15s; }
+.btn-primary { background:var(--blue); color:#fff; } .btn-primary:hover { background:var(--blue-dark); }
+.btn-green { background:var(--green); color:#fff; }
+.btn-red { background:var(--red); color:#fff; }
+.btn-gray { background:#e5e7eb; color:#374151; }
+.btn:disabled { opacity:.5; cursor:not-allowed; }
+.section-title { font-size:1.08rem; font-weight:700; color:var(--blue); margin-bottom:14px; padding-bottom:6px; border-bottom:2px solid #e2e8f0; }
+.deduct-input { width:70px !important; padding:5px 6px !important; font-size:.88rem; text-align:center; }
+.spinner { display:inline-block; width:18px; height:18px; border:3px solid #fff4; border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:6px; }
+@keyframes spin{to{transform:rotate(360deg)}}
+.modal-bg { display:none; position:fixed; inset:0; background:#0006; z-index:100; align-items:center; justify-content:center; }
+.modal-bg.open { display:flex; }
+.modal { background:#fff; border-radius:14px; padding:28px; max-width:820px; width:96%; max-height:90vh; overflow-y:auto; }
+.pill { display:inline-block; padding:2px 10px; border-radius:20px; font-size:.8rem; font-weight:600; }
+.pill-green { background:#dcfce7; color:var(--green); }
+.pill-red { background:#fee2e2; color:var(--red); }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+  <h1>Teacher Dashboard — US Geography Assessment</h1>
+</header>
+
+<div class="container">
+
+  <!-- LOGIN -->
+  <div id="page-login" class="card">
+    <div class="section-title">🔐 Teacher Login</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;">
+        <label>Password</label>
+        <input type="password" id="teacher-pw" placeholder="Enter teacher password"
+          onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Login</button>
+      <a href="/" class="btn btn-gray" style="text-decoration:none;">← Back to Tests</a>
+    </div>
+    <div id="login-err" style="color:var(--red);font-size:.88rem;margin-top:10px;display:none;"></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" style="display:none;">
+
+    <!-- Stats bar -->
+    <div class="card" style="padding:16px 24px;">
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+        <div>
+          <div style="font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;font-weight:600;">Submissions</div>
+          <div style="font-size:1.8rem;font-weight:800;color:var(--blue);" id="stat-count">0</div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;font-weight:600;">Class Average</div>
+          <div style="font-size:1.8rem;font-weight:800;color:#374151;" id="stat-avg">—</div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;font-weight:600;">High Score</div>
+          <div style="font-size:1.8rem;font-weight:800;color:var(--green);" id="stat-high">—</div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;font-weight:600;">Low Score</div>
+          <div style="font-size:1.8rem;font-weight:800;color:var(--red);" id="stat-low">—</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-gray" style="font-size:.85rem;" onclick="refreshData()">🔄 Refresh</button>
+          <button class="btn btn-gray" style="font-size:.85rem;" onclick="exportCSV()">📥 Export CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+      <div class="section-title">Student Submissions</div>
+      <div id="teacher-table"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="the-modal">
+  <div class="modal">
+    <div id="modal-content"></div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-gray" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Answer key (matches student test) ───────────────────────────────────────
+const MC_ANSWERS = {
+  q1:'d', q2:'a', q3:'d', q4:'b', q5:'c', q6:'b', q7:'a', q8:'c',
+  q9:'d', q10:'c', q11:'d', q12:'a', q13:'a', q14:'d', q15:'b',
+  q16:'c', q17:'a', q18:'c', q19:'a', q20:'c', q21:'d', q22:'c', q23:'b'
+};
+
+const VOCAB_ANSWERS = {
+  m24:'j', m25:'d', m26:'f', m27:'g', m28:'c', m29:'a', m30:'h', m31:'e', m32:'i', m33:'b'
+};
+
+const CAP_ANSWERS = {
+  c34:'e', c35:'g', c36:'a', c37:'h', c38:'d', c39:'j', c40:'f', c41:'i', c42:'b', c43:'c'
+};
+
+const Q_TEXT = {
+  q1:"In which hemisphere is the United States?",
+  q2:"Approximate distance across US coast-to-coast?",
+  q3:"Which state is NOT part of New England?",
+  q4:"Which best describes New England's climate?",
+  q5:"What is the biggest city in New England?",
+  q6:"What do many immigrants first see in NYC?",
+  q7:"Only mainland American city not in a state?",
+  q8:"Florida is bordered by Atlantic Ocean and ___?",
+  q9:"Which state is located on a peninsula?",
+  q10:"Chicago is located on the shore of?",
+  q11:"Which is NOT one of the Great Lakes?",
+  q12:"Nickname for Great Plains wheat region?",
+  q13:"What is a tornado?",
+  q14:"Body of water south of Florida and Gulf of Mexico?",
+  q15:"Sculpture with four presidents carved in a cliff?",
+  q16:"What is Old Faithful?",
+  q17:"Which states were once part of Mexico?",
+  q18:"What is the Grand Canyon?",
+  q19:"What area receives the most rain in the US?",
+  q20:"Which state is largest in land size?",
+  q21:"What is special about Alaska's geography?",
+  q22:"How many islands make up Hawaii?",
+  q23:"How were the Hawaiian Islands formed?"
+};
+
+const MC_OPTIONS = {
+  q1:{a:"Eastern",b:"American",c:"Southern",d:"Western"},
+  q2:{a:"three thousand miles",b:"five hundred miles",c:"thirty thousand miles",d:"one thousand miles"},
+  q3:{a:"Massachusetts",b:"Rhode Island",c:"New Hampshire",d:"Virginia"},
+  q4:{a:"constant rain",b:"four different seasons",c:"four similar seasons",d:"cool spring/summer, humid winter"},
+  q5:{a:"Salt Lake City",b:"Los Angeles",c:"Boston",d:"Denver"},
+  q6:{a:"the mayor",b:"Statue of Liberty",c:"Golden Gate Bridge",d:"the Capitol"},
+  q7:{a:"Washington, D.C.",b:"Honolulu",c:"Anchorage",d:"Miami"},
+  q8:{a:"Pacific Ocean",b:"Mississippi River",c:"Gulf of Mexico",d:"Great Lakes"},
+  q9:{a:"Maine",b:"Hawaii",c:"Virginia",d:"Florida"},
+  q10:{a:"Chesapeake Bay",b:"Missouri River",c:"Lake Michigan",d:"Mississippi River"},
+  q11:{a:"Erie",b:"Superior",c:"Michigan",d:"Champlain"},
+  q12:{a:"America's Breadbasket",b:"the Great Plains",c:"the Fiber Belt",d:"Wheatsville"},
+  q13:{a:"funnel-shaped cloud with high winds",b:"a kind of blizzard",c:"rainstorm with thunder/lightning",d:"hurricane that forms over land"},
+  q14:{a:"Chesapeake Bay",b:"Pacific Ocean",c:"Atlantic Ocean",d:"Caribbean Sea"},
+  q15:{a:"Washington Monument",b:"Mount Rushmore",c:"Yosemite",d:"Denali"},
+  q16:{a:"national park",b:"mountain",c:"geyser",d:"volcano"},
+  q17:{a:"California, New Mexico, Arizona",b:"Oregon, New Mexico, Arizona",c:"Nevada, Louisiana, Arizona",d:"New Mexico, Arizona, Florida"},
+  q18:{a:"geyser",b:"obelisk",c:"gorge",d:"funnel"},
+  q19:{a:"western Oregon and Washington",b:"northern Maine",c:"Hawaii",d:"the South"},
+  q20:{a:"California",b:"Montana",c:"Alaska",d:"Texas"},
+  q21:{a:"Covered in snow all year",b:"No rivers",c:"No trees due to cold",d:"17 of 20 tallest US mountains"},
+  q22:{a:"one",b:"four",c:"more than one hundred",d:"none of the above"},
+  q23:{a:"Split off from California",b:"Erupting volcanoes",c:"Result of earthquake",d:"both b and c"}
+};
+
+const VOCAB_TERMS = {
+  m24:"peninsula", m25:"landform", m26:"mine", m27:"indigenous",
+  m28:"natural resource", m29:"gorge", m30:"bay", m31:"erosion",
+  m32:"commerce", m33:"Gulf Stream"
+};
+
+const VOCAB_DEFS = {
+  a:"a steep, narrow canyon", b:"warm ocean current (Gulf of Mexico to Newfoundland)",
+  c:"something from nature useful to humans", d:"a natural physical feature on Earth's surface",
+  e:"carrying away of soil/rock by water, ice, or wind", f:"to dig into earth for minerals or coal",
+  g:"native to a particular region or environment", h:"part of a sea or ocean that extends into land",
+  i:"buying and selling of goods and services", j:"piece of land almost surrounded by water"
+};
+
+const CAP_STATES = {
+  c34:"California", c35:"Massachusetts", c36:"Georgia", c37:"New York", c38:"Illinois",
+  c39:"Texas", c40:"Arizona", c41:"Hawaii", c42:"Colorado", c43:"Kansas"
+};
+
+const CAP_LETTERS = {a:"Atlanta",b:"Denver",c:"Topeka",d:"Springfield",e:"Sacramento",f:"Phoenix",g:"Boston",h:"Albany",i:"Honolulu",j:"Austin"};
+
+// ─── Grading ─────────────────────────────────────────────────────────────────
+function gradeSubmission(data) {
+  let mc = 0, vocab = 0, caps = 0;
+  const detail = { mc:{}, vocab:{}, caps:{} };
+
+  for (const q in MC_ANSWERS) {
+    const correct = (data[q] || '').toLowerCase().trim() === MC_ANSWERS[q];
+    detail.mc[q] = { answer: data[q] || '', correct };
+    if (correct) mc++;
+  }
+  for (const k in VOCAB_ANSWERS) {
+    const correct = (data[k] || '').toLowerCase().trim() === VOCAB_ANSWERS[k];
+    detail.vocab[k] = { answer: data[k] || '', correct };
+    if (correct) vocab++;
+  }
+  for (const k in CAP_ANSWERS) {
+    const correct = (data[k] || '').toLowerCase().trim() === CAP_ANSWERS[k];
+    detail.caps[k] = { answer: data[k] || '', correct };
+    if (correct) caps++;
+  }
+
+  const total = mc + vocab + caps;   // /43
+  const pct = Math.round((total / 43) * 100);
+  const letter = pct>=90?'A':pct>=80?'B':pct>=70?'C':pct>=60?'D':'F';
+  return { mc, vocab, caps, total, pct, letter, detail };
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let teacherPW = '', submissions = [], sentSet = new Set();
+
+// ─── Login ────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const pw = document.getElementById('teacher-pw').value.trim();
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-err');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Loading…';
+
+  try {
+    const r = await fetch('/api/teacher-geo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'getData', password: pw, testId: 'GEO' })
+    });
+    const data = await r.json();
+    if (data.error) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+
+    teacherPW = pw;
+    submissions = (data || []).map(s => ({
+      ...s,
+      graded: gradeSubmission(s.data || s)
+    })).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    submissions.forEach(s => { if (s.emailSent) sentSet.add(s.name); });
+
+    document.getElementById('page-login').style.display = 'none';
+    document.getElementById('page-dashboard').style.display = 'block';
+    renderDashboard();
+  } catch (e) {
+    errEl.textContent = 'Connection error: ' + e.message;
+    errEl.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.innerHTML = 'Login';
+}
+
+async function refreshData() {
+  const r = await fetch('/api/teacher-geo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'getData', password: teacherPW, testId: 'GEO' })
+  });
+  const data = await r.json();
+  if (data.error) { alert(data.error); return; }
+  submissions = (data || []).map(s => ({ ...s, graded: gradeSubmission(s.data || s) }))
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  submissions.forEach(s => { if (s.emailSent) sentSet.add(s.name); });
+  renderDashboard();
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  if (!submissions.length) {
+    document.getElementById('teacher-table').innerHTML =
+      '<p style="color:#6b7280;padding:12px;">No submissions yet.</p>';
+    updateStats();
+    return;
+  }
+  updateStats();
+
+  let html = `<div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-size:.9rem;">
+    <thead><tr style="background:#f1f5f9;">
+      <th style="padding:10px 12px;text-align:left;border:1px solid #e2e8f0;">Student</th>
+      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">MC<br><small style="font-weight:400;color:#6b7280;">/23</small></th>
+      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Vocab<br><small style="font-weight:400;color:#6b7280;">/10</small></th>
+      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Capitals<br><small style="font-weight:400;color:#6b7280;">/10</small></th>
+      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Total<br><small style="font-weight:400;color:#6b7280;">/43</small></th>
+      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">%</th>
+      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Grade</th>
+      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Date</th>
+      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Actions</th>
+    </tr></thead><tbody>`;
+
+  submissions.forEach((s, i) => {
+    const g = s.graded;
+    const gradeBg = g.letter==='A'?'#dcfce7':g.letter==='B'?'#dbeafe':g.letter==='C'?'#fef9c3':g.letter==='D'?'#ffedd5':'#fee2e2';
+    const gradeColor = g.letter==='A'?'#15803d':g.letter==='B'?'#1d4ed8':g.letter==='C'?'#854d0e':g.letter==='D'?'#9a3412':'#991b1b';
+
+    html += `<tr style="border-bottom:1px solid #e2e8f0;">
+      <td style="padding:10px 12px;border:1px solid #e2e8f0;font-weight:600;">${s.name || '—'}</td>
+      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">${g.mc}</td>
+      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">${g.vocab}</td>
+      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">${g.caps}</td>
+      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;font-weight:700;">${g.total}</td>
+      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">${g.pct}%</td>
+      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">
+        <span style="display:inline-block;padding:3px 12px;border-radius:20px;font-weight:800;background:${gradeBg};color:${gradeColor};">${g.letter}</span>
+      </td>
+      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;font-size:.82rem;color:#6b7280;">${s.timestamp || s.date || '—'}</td>
+      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">
+        <button class="btn btn-gray" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="openDetail(${i})">📋 Detail</button>
+        ${sentSet.has(s.name)
+          ? `<button class="btn" style="padding:5px 10px;font-size:.8rem;margin:2px;background:var(--blue);color:#fff;cursor:default;" disabled>✉ Sent ✓</button>`
+          : `<button class="btn btn-green" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="sendEmail(${i})">✉ Email</button>`}
+        <button class="btn btn-red" style="padding:5px 10px;font-size:.8rem;margin:2px;" onclick="confirmDel(${i})">🗑</button>
+      </td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  document.getElementById('teacher-table').innerHTML = html;
+}
+
+function updateStats() {
+  const n = submissions.length;
+  document.getElementById('stat-count').textContent = n;
+  if (!n) { ['stat-avg','stat-high','stat-low'].forEach(id=>document.getElementById(id).textContent='—'); return; }
+  const pcts = submissions.map(s => s.graded.pct);
+  document.getElementById('stat-avg').textContent = Math.round(pcts.reduce((a,b)=>a+b,0)/n) + '%';
+  document.getElementById('stat-high').textContent = Math.max(...pcts) + '%';
+  document.getElementById('stat-low').textContent = Math.min(...pcts) + '%';
+}
+
+// ─── Detail modal ─────────────────────────────────────────────────────────────
+function openDetail(i) {
+  const s = submissions[i];
+  const g = s.graded;
+
+  let html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <span style="font-size:1.4rem;">📋</span>
+    <h3 style="font-size:1.15rem;">${s.name} — ${g.total}/43 (${g.pct}% · ${g.letter})</h3>
+  </div>`;
+
+  // Section A MC
+  html += `<div style="font-weight:700;font-size:.92rem;color:#374151;margin-bottom:8px;">Section A — Multiple Choice (${g.mc}/23)</div>
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:18px;">
+    <thead><tr style="background:#f1f5f9;">
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">Q</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">Question</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">Student</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">Correct</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">✓/✗</th>
+    </tr></thead><tbody>`;
+
+  for (const q in MC_ANSWERS) {
+    const r = g.detail.mc[q];
+    const correctLetter = MC_ANSWERS[q];
+    const correctText = MC_OPTIONS[q]?.[correctLetter] || correctLetter;
+    const studentText = r.answer ? `${r.answer}) ${MC_OPTIONS[q]?.[r.answer.toLowerCase()] || ''}` : '—';
+    html += `<tr style="background:${r.correct?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;font-weight:700;">${q.toUpperCase()}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;font-size:.82rem;">${Q_TEXT[q]}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;font-weight:700;">${studentText}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;color:#16a34a;font-weight:600;">${correctLetter}) ${correctText}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">${r.correct?'<span style="color:#16a34a;font-size:1.1rem;">✓</span>':'<span style="color:#dc2626;font-size:1.1rem;">✗</span>'}</td>
+    </tr>`;
+  }
+  html += `</tbody></table></div>`;
+
+  // Section B Vocab
+  html += `<div style="font-weight:700;font-size:.92rem;color:#374151;margin-bottom:8px;">Section B — Vocabulary Matching (${g.vocab}/10)</div>
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:18px;">
+    <thead><tr style="background:#f1f5f9;">
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">#</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">Term</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">Student</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">Correct Letter</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">Definition</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">✓/✗</th>
+    </tr></thead><tbody>`;
+
+  for (const k in VOCAB_ANSWERS) {
+    const r = g.detail.vocab[k];
+    const num = k.slice(1);
+    const correctL = VOCAB_ANSWERS[k];
+    html += `<tr style="background:${r.correct?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;font-weight:700;">${num}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;font-weight:600;">${VOCAB_TERMS[k]}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;font-weight:700;">${r.answer || '—'}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;color:#16a34a;font-weight:700;">${correctL}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;font-size:.8rem;color:#475569;">${VOCAB_DEFS[correctL] || ''}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">${r.correct?'<span style="color:#16a34a;font-size:1.1rem;">✓</span>':'<span style="color:#dc2626;font-size:1.1rem;">✗</span>'}</td>
+    </tr>`;
+  }
+  html += `</tbody></table></div>`;
+
+  // Section C Capitals
+  html += `<div style="font-weight:700;font-size:.92rem;color:#374151;margin-bottom:8px;">Section C — State Capitals Bonus (${g.caps}/10)</div>
+  <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+    <thead><tr style="background:#f1f5f9;">
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">#</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">State</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">Student</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">Correct Letter</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;">Capital City</th>
+      <th style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">✓/✗</th>
+    </tr></thead><tbody>`;
+
+  for (const k in CAP_ANSWERS) {
+    const r = g.detail.caps[k];
+    const num = k.slice(1);
+    const correctL = CAP_ANSWERS[k];
+    html += `<tr style="background:${r.correct?'#f0fdf4':'#fff1f2'};">
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;font-weight:700;">${num}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;font-weight:600;">${CAP_STATES[k]}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;font-weight:700;">${r.answer || '—'}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;color:#16a34a;font-weight:700;">${correctL}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;color:#16a34a;font-weight:600;">${CAP_LETTERS[correctL] || ''}</td>
+      <td style="padding:7px 10px;border:1px solid #e2e8f0;text-align:center;">${r.correct?'<span style="color:#16a34a;font-size:1.1rem;">✓</span>':'<span style="color:#dc2626;font-size:1.1rem;">✗</span>'}</td>
+    </tr>`;
+  }
+  html += `</tbody></table></div>`;
+
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('the-modal').classList.add('open');
+}
+
+// ─── Email ────────────────────────────────────────────────────────────────────
+async function sendEmail(i) {
+  const s = submissions[i];
+  if (!confirm(`Send score report to parent of ${s.name}?`)) return;
+  try {
+    const r = await fetch('/api/teacher-geo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'sendEmail', password: teacherPW, testId: 'GEO',
+        name: s.name, graded: s.graded, rowIndex: s.row, sheetName: s.sheetName })
+    });
+    const res = await r.json();
+    if (res.error) { alert('Error: ' + res.error); return; }
+    sentSet.add(s.name);
+    renderDashboard();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ─── Delete ───────────────────────────────────────────────────────────────────
+async function confirmDel(i) {
+  const s = submissions[i];
+  if (!confirm(`Delete submission for ${s.name}? This cannot be undone.`)) return;
+  try {
+    const r = await fetch('/api/teacher-geo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'deleteRow', password: teacherPW, testId: 'GEO',
+        rowIndex: s.row, sheetName: s.sheetName })
+    });
+    const res = await r.json();
+    if (res.error) { alert('Error: ' + res.error); return; }
+    submissions.splice(i, 1);
+    renderDashboard();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ─── Export CSV ───────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!submissions.length) { alert('No submissions to export.'); return; }
+  const headers = ['Name','Date','MC (/23)','Vocab (/10)','Capitals (/10)','Total (/43)','Percent','Grade',
+    ...Object.keys(MC_ANSWERS).map(q=>q.toUpperCase()),
+    ...Object.keys(VOCAB_ANSWERS).map(k=>'V'+k.slice(1)),
+    ...Object.keys(CAP_ANSWERS).map(k=>'C'+k.slice(1))
+  ];
+  const rows = submissions.map(s => {
+    const g = s.graded;
+    const mcVals = Object.keys(MC_ANSWERS).map(q => g.detail.mc[q]?.answer || '');
+    const vocabVals = Object.keys(VOCAB_ANSWERS).map(k => g.detail.vocab[k]?.answer || '');
+    const capVals = Object.keys(CAP_ANSWERS).map(k => g.detail.caps[k]?.answer || '');
+    return [s.name||'', s.timestamp||s.date||'', g.mc, g.vocab, g.caps, g.total, g.pct+'%', g.letter,
+      ...mcVals, ...vocabVals, ...capVals];
+  });
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'geo-assessment-results.csv';
+  a.click();
+}
+
+function closeModal() {
+  document.getElementById('the-modal').classList.remove('open');
+}
+document.getElementById('the-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('the-modal')) closeModal();
+});
+</script>
+</body>
+</html>
