@@ -215,10 +215,12 @@ function gradeSubmission(data) {
     if (correct) caps++;
   }
 
-  const total = mc + vocab + caps;   // /43
-  const pct = Math.round((total / 43) * 100);
+  const base = mc + vocab;           // /33
+  const bonus = caps * 0.5;           // /5 bonus
+  const total = base + bonus;
+  const pct = Math.min(100, Math.round((base / 33) * 100));
   const letter = pct>=90?'A':pct>=80?'B':pct>=70?'C':pct>=60?'D':'F';
-  return { mc, vocab, caps, total, pct, letter, detail };
+  return { mc, vocab, caps, base, bonus, total, pct, letter, detail };
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -292,7 +294,7 @@ function renderDashboard() {
       <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">MC<br><small style="font-weight:400;color:#6b7280;">/23</small></th>
       <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Vocab<br><small style="font-weight:400;color:#6b7280;">/10</small></th>
       <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Capitals<br><small style="font-weight:400;color:#6b7280;">/10</small></th>
-      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Total<br><small style="font-weight:400;color:#6b7280;">/43</small></th>
+      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Base<br><small style="font-weight:400;color:#6b7280;">/33</small></th><th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Bonus<br><small style="font-weight:400;color:#6b7280;">/5</small></th>
       <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">%</th>
       <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Grade</th>
       <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Date</th>
@@ -309,7 +311,8 @@ function renderDashboard() {
       <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">${g.mc}</td>
       <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">${g.vocab}</td>
       <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">${g.caps}</td>
-      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;font-weight:700;">${g.total}</td>
+      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;font-weight:700;">${g.base}</td>
+      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;color:#16a34a;font-weight:700;">${g.bonus > 0 ? '+' + g.bonus.toFixed(1) : '—'}</td>
       <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">${g.pct}%</td>
       <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">
         <span style="display:inline-block;padding:3px 12px;border-radius:20px;font-weight:800;background:${gradeBg};color:${gradeColor};">${g.letter}</span>
@@ -346,7 +349,7 @@ function openDetail(i) {
 
   let html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
     <span style="font-size:1.4rem;">📋</span>
-    <h3 style="font-size:1.15rem;">${s.name} — ${g.total}/43 (${g.pct}% · ${g.letter})</h3>
+    <h3 style="font-size:1.15rem;">${s.name} — ${g.base}/33 + ${g.bonus.toFixed(1)} bonus (${g.pct}% · ${g.letter})</h3>
   </div>`;
 
   // Section A MC
@@ -472,7 +475,7 @@ async function confirmDel(i) {
 // ─── Export CSV ───────────────────────────────────────────────────────────────
 function exportCSV() {
   if (!submissions.length) { alert('No submissions to export.'); return; }
-  const headers = ['Name','Date','MC (/23)','Vocab (/10)','Capitals (/10)','Total (/43)','Percent','Grade',
+  const headers = ['Name','Date','MC (/23)','Vocab (/10)','Capitals (/10)','Base (/33)', 'Bonus (/5)','Percent','Grade',
     ...Object.keys(MC_ANSWERS).map(q=>q.toUpperCase()),
     ...Object.keys(VOCAB_ANSWERS).map(k=>'V'+k.slice(1)),
     ...Object.keys(CAP_ANSWERS).map(k=>'C'+k.slice(1))
@@ -482,7 +485,7 @@ function exportCSV() {
     const mcVals = Object.keys(MC_ANSWERS).map(q => g.detail.mc[q]?.answer || '');
     const vocabVals = Object.keys(VOCAB_ANSWERS).map(k => g.detail.vocab[k]?.answer || '');
     const capVals = Object.keys(CAP_ANSWERS).map(k => g.detail.caps[k]?.answer || '');
-    return [s.name||'', s.timestamp||s.date||'', g.mc, g.vocab, g.caps, g.total, g.pct+'%', g.letter,
+    return [s.name||'', s.timestamp||s.date||'', g.mc, g.vocab, g.caps, g.base, g.bonus.toFixed(1), g.pct+'%', g.letter,
       ...mcVals, ...vocabVals, ...capVals];
   });
   const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
