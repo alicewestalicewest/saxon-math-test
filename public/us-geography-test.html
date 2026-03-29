@@ -352,21 +352,55 @@
 </head>
 <body>
 
+<!-- ── START SCREEN ─────────────────────────────────────────── -->
+<div id="page-start" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px;">
+  <div style="background:white;border-radius:4px;box-shadow:0 4px 32px rgba(26,39,68,0.12);padding:40px 44px;max-width:480px;width:100%;border-top:5px solid var(--gold);">
+    <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--navy);margin-bottom:6px;">Geography of the United States</div>
+    <div style="font-size:13px;color:var(--slate);margin-bottom:28px;font-style:italic;">Unit Assessment — select your team and name to begin</div>
+
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:var(--navy);margin-bottom:8px;">Team</div>
+    <div style="display:flex;gap:10px;margin-bottom:22px;">
+      <button id="btn-blue" onclick="selectTeam('blue')"
+        style="flex:1;padding:12px;border:2px solid var(--border);background:white;border-radius:3px;font-family:'Source Serif 4',serif;font-size:14px;font-weight:700;cursor:pointer;color:var(--slate);transition:all 0.15s;">
+        🔵 Team Blue
+      </button>
+      <button id="btn-red" onclick="selectTeam('red')"
+        style="flex:1;padding:12px;border:2px solid var(--border);background:white;border-radius:3px;font-family:'Source Serif 4',serif;font-size:14px;font-weight:700;cursor:pointer;color:var(--slate);transition:all 0.15s;">
+        🔴 Team Red
+      </button>
+    </div>
+
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:var(--navy);margin-bottom:8px;">Your Name</div>
+    <select id="name-select" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:3px;font-family:'Source Serif 4',serif;font-size:15px;color:var(--navy);background:white;margin-bottom:22px;outline:none;">
+      <option value="">— Select your name —</option>
+    </select>
+
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:var(--navy);margin-bottom:8px;">Today's Date</div>
+    <input type="date" id="start-date" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:3px;font-family:'Source Serif 4',serif;font-size:15px;color:var(--navy);margin-bottom:28px;outline:none;"/>
+
+    <button onclick="beginTest()" style="width:100%;background:var(--navy);color:var(--cream);border:none;padding:14px;font-family:'Playfair Display',serif;font-size:16px;font-weight:700;cursor:pointer;border-radius:3px;letter-spacing:1px;">Begin Test →</button>
+    <a href="/us-geography-teacher.html" style="display:block;text-align:center;margin-top:16px;font-size:12px;color:var(--slate);text-decoration:none;letter-spacing:1px;">Teacher Login</a>
+  </div>
+</div>
+
+<!-- ── TEST ─────────────────────────────────────────────────── -->
+<div id="page-test" style="display:none;">
+
 <div class="test-header">
   <div class="header-label">Unit Assessment</div>
   <h1><em>The Geography of the United States</em></h1>
-  <div class="meta-row">
+  <div class="meta-row" style="margin-top:14px;">
     <div class="meta-field">
-      <label>Name</label>
-      <input type="text" placeholder="___________________">
+      <label>Student</label>
+      <div id="display-name" style="color:var(--gold);font-weight:700;font-size:15px;padding-top:4px;"></div>
+    </div>
+    <div class="meta-field">
+      <label>Team</label>
+      <div id="display-team" style="font-weight:700;font-size:13px;padding-top:4px;letter-spacing:1px;"></div>
     </div>
     <div class="meta-field">
       <label>Date</label>
-      <input type="text" placeholder="___________________">
-    </div>
-    <div class="meta-field">
-      <label>Period</label>
-      <input type="text" placeholder="______">
+      <div id="display-date" style="font-size:13px;padding-top:4px;color:rgba(245,240,232,0.7);"></div>
     </div>
   </div>
 </div>
@@ -377,7 +411,6 @@
     <div class="score-val" id="answered-count">0 / 33</div>
   </div>
   <div class="progress-wrap"><div class="progress-fill" id="progress-fill"></div></div>
-  <button onclick="window.location.href='/us-geography-teacher.html'" style="background:transparent;border:1px solid rgba(200,146,42,0.5);color:var(--gold);padding:8px 14px;font-family:serif;font-size:12px;cursor:pointer;border-radius:2px;letter-spacing:1px;margin-right:6px;">Teacher Login</button>
   <button id="submit-btn" onclick="submitTest()">Submit Test</button>
 </div>
 
@@ -812,8 +845,9 @@ async function submitTest() {
 
   // Collect all answers
   const payload = {
-    name: document.querySelector('.meta-field input[placeholder="___________________"]')?.value?.trim() || '',
-    date: document.querySelectorAll('.meta-field input')[1]?.value?.trim() || '',
+    name: currentStudentName,
+    date: currentDate,
+    team: currentTeam,
     testId: 'GEO'
   };
 
@@ -944,7 +978,72 @@ function retakeTest() {
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
+// ── Roster ───────────────────────────────────────────────────
+const TEAM_BLUE = [
+  "Aarohi Agrawal","Alisha Agrawal","Ananya Arvind","Elizabeth Cai","Eloisa Keojampa",
+  "Eric Huang","Erin Yuen","Evan Chang","Jenny Montgomery","Jooha Park",
+  "Leo Matsiev","Maya Benavidez","Nathan Streeter","Peyton Pereira","Rynshall Chen",
+  "Samiha Java","Tate Yeung","Thea Angelidis-Smith","Vassilis Papadimitriou",
+  "Test Student Blue"
+];
+const TEAM_RED = [
+  "Aarush Gupta","Alisha Jain","Aria Pan","Ashra Vaka","Becca Zhang",
+  "Catherine Wang","Claire You","Elvin Qin","Erik Xu","Ethan Jiang",
+  "Francis Wang","Isabelle Yan","Jennifer Chen","Kaya Tobiczyk","Lisa Zhang",
+  "Neha Murthy","Oliver Liu","Rita Liang","Vikram Vemoory","William Lu",
+  "Xinkai Shen","Xinyan Shen","Test Student Red"
+];
+
+let currentTeam = '';
+let currentStudentName = '';
+let currentDate = '';
+
+function selectTeam(team) {
+  currentTeam = team;
+  const blueBtn = document.getElementById('btn-blue');
+  const redBtn  = document.getElementById('btn-red');
+  if (team === 'blue') {
+    blueBtn.style.cssText += 'border-color:#2563eb;background:#eff6ff;color:#1d4ed8;';
+    redBtn.style.cssText  += 'border-color:var(--border);background:white;color:var(--slate);';
+  } else {
+    redBtn.style.cssText   += 'border-color:#dc2626;background:#fff1f2;color:#dc2626;';
+    blueBtn.style.cssText  += 'border-color:var(--border);background:white;color:var(--slate);';
+  }
+  // Populate name dropdown
+  const sel = document.getElementById('name-select');
+  const roster = team === 'blue' ? TEAM_BLUE : TEAM_RED;
+  sel.innerHTML = '<option value="">— Select your name —</option>';
+  roster.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = n;
+    sel.appendChild(opt);
+  });
+}
+
+function beginTest() {
+  const name = document.getElementById('name-select').value;
+  const date = document.getElementById('start-date').value;
+  if (!currentTeam) { alert('Please select your team.'); return; }
+  if (!name)         { alert('Please select your name.'); return; }
+  if (!date)         { alert('Please enter today\'s date.'); return; }
+
+  currentStudentName = name;
+  currentDate = date;
+
+  document.getElementById('display-name').textContent = name;
+  document.getElementById('display-team').textContent =
+    currentTeam === 'blue' ? '🔵 TEAM BLUE' : '🔴 TEAM RED';
+  document.getElementById('display-team').style.color =
+    currentTeam === 'blue' ? '#93c5fd' : '#fca5a5';
+  document.getElementById('display-date').textContent = date;
+
+  document.getElementById('page-start').style.display = 'none';
+  document.getElementById('page-test').style.display  = 'block';
+  window.scrollTo(0, 0);
+}
+
 updateProgress();
 </script>
+</div><!-- end page-test -->
 </body>
 </html>
