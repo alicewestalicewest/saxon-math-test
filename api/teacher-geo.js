@@ -33,10 +33,12 @@ function gradeSubmission(data) {
   for (const q in MC_ANSWERS)    if ((data[q]||"").toLowerCase().trim() === MC_ANSWERS[q])    mc++;
   for (const k in VOCAB_ANSWERS) if ((data[k]||"").toLowerCase().trim() === VOCAB_ANSWERS[k]) vocab++;
   for (const k in CAP_ANSWERS)   if ((data[k]||"").toLowerCase().trim() === CAP_ANSWERS[k])   caps++;
-  const total = mc + vocab + caps;
-  const pct   = Math.round((total / 43) * 100);
+  const base = mc + vocab;
+  const bonus = caps * 0.5;
+  const total = base + bonus;
+  const pct   = Math.min(100, Math.round((base / 33) * 100));
   const letter = pct>=90?"A":pct>=80?"B":pct>=70?"C":pct>=60?"D":"F";
-  return { mc, vocab, caps, total, pct, letter };
+  return { mc, vocab, caps, base, bonus, total, pct, letter };
 }
 
 async function sendParentEmail(name, graded) {
@@ -67,7 +69,8 @@ Section A — Multiple Choice  : ${graded.mc} / 23
 Section B — Vocabulary       : ${graded.vocab} / 10
 Section C — State Capitals   : ${graded.caps} / 10
 
-TOTAL                        : ${graded.total} / 43  (${graded.pct}%  ·  ${graded.letter})
+Base Score                   : ${graded.base} / 33  (${graded.pct}%  ·  ${graded.letter})
+Bonus (State Capitals)       : +${graded.bonus.toFixed(1)} / 5
 ${divider}
 
 Please let me know if you have any questions.
