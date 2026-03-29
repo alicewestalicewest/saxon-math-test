@@ -462,7 +462,7 @@ async function confirmDel(i) {
     const r = await fetch('/api/teacher-geo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'deleteRow', password: teacherPW, testId: 'GEO',
+      body: JSON.stringify({ action: 'deleteSubmission', password: teacherPW, testId: 'GEO',
         rowIndex: s.row, sheetName: s.sheetName })
     });
     const res = await r.json();
