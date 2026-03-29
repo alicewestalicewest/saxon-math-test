@@ -419,7 +419,7 @@
   <!-- SECTION A -->
   <div class="section-header">
     <div class="section-letter">A</div>
-    <div class="section-title">Circle the letter of the best answer.</div>
+    <div class="section-title">Circle the letter of the best answer. <span style="font-weight:400;color:var(--slate);font-size:12px;">(1 point each)</span></div>
   </div>
 
   <!-- Q1 -->
@@ -678,7 +678,7 @@
   <!-- SECTION B: VOCABULARY MATCHING -->
   <div class="section-header">
     <div class="section-letter">B</div>
-    <div class="section-title">Match the following vocabulary terms with their definitions. Write the correct letter on the line.</div>
+    <div class="section-title">Match the following vocabulary terms with their definitions. Write the correct letter on the line. <span style="font-weight:400;color:var(--slate);font-size:12px;">(1 point each)</span></div>
   </div>
 
   <table class="match-table">
@@ -747,7 +747,7 @@
   <!-- SECTION C: BONUS CAPITALS -->
   <div class="section-header" style="margin-top:48px;">
     <div class="section-letter">C</div>
-    <div class="section-title">BONUS — Match the following states with their capitals. Write the correct letter on the line.</div>
+    <div class="section-title">BONUS — Match the following states with their capitals. Write the correct letter on the line. <span style="font-weight:400;color:var(--slate);font-size:12px;">(0.5 points each · no penalty for incorrect answers)</span></div>
   </div>
 
   <table class="match-table">
@@ -866,15 +866,23 @@ async function submitTest() {
   }
 
   // Compute score for payload
-  let correct = 0;
-  for (let q in mcAnswers) { if (payload[q] === mcAnswers[q]) correct++; }
-  for (let id in matchAnswers) { if (payload[id].toLowerCase() === matchAnswers[id]) correct++; }
-  for (let id in capAnswers) { if (payload[id].toLowerCase() === capAnswers[id]) correct++; }
-  const pct = Math.round((correct / TOTAL) * 100);
+  // Section A: 1pt each (23pts), Section B: 1pt each (10pts), Section C bonus: 0.5pt each (5pts max)
+  let mcCorrect = 0, vocabCorrect = 0, capsCorrect = 0;
+  for (let q in mcAnswers) { if (payload[q] === mcAnswers[q]) mcCorrect++; }
+  for (let id in matchAnswers) { if (payload[id].toLowerCase() === matchAnswers[id]) vocabCorrect++; }
+  for (let id in capAnswers) { if (payload[id].toLowerCase() === capAnswers[id]) capsCorrect++; }
+  const mcScore    = mcCorrect;           // /23
+  const vocabScore = vocabCorrect;        // /10
+  const capsScore  = capsCorrect * 0.5;  // /5 bonus
+  const totalScore = mcScore + vocabScore + capsScore; // /38 base + up to 5 bonus
+  const pct = Math.round((totalScore / 33) * 100); // out of 33 base points
   const grade = pct>=90?'A':pct>=80?'B':pct>=70?'C':pct>=60?'D':'F';
-  payload.total = correct;
+  payload.total = totalScore;
   payload.pct = pct;
   payload.letter = grade;
+  payload.mcCorrect = mcCorrect;
+  payload.vocabCorrect = vocabCorrect;
+  payload.capsCorrect = capsCorrect;
 
   // POST to backend
   try {
@@ -898,6 +906,7 @@ async function submitTest() {
 
   // Now grade visually
   document.body.classList.add('submitted');
+  const correct = mcCorrect + vocabCorrect + capsCorrect; // for legacy compat
 
   for (let q in mcAnswers) {
     const sel = document.querySelector(`input[name="${q}"]:checked`);
@@ -947,10 +956,11 @@ async function submitTest() {
   else if (pct >= 75) msg = 'Good effort. Review a few more landmarks.';
   else if (pct >= 60) msg = "Keep studying — you're getting there!";
   else msg = "Time for more review. You've got this!";
+  if (capsCorrect >= 8) msg += ' Great job on the bonus!';
 
   document.getElementById('res-grade').textContent = grade;
-  document.getElementById('res-pct').textContent = `${correct} / ${TOTAL} correct`;
-  document.getElementById('res-detail').textContent = `${pct}%`;
+  document.getElementById('res-pct').textContent = `${totalScore.toFixed(1)} / 33 pts  (+${capsScore.toFixed(1)} bonus)`;
+  document.getElementById('res-detail').textContent = `${pct}%  ·  MC: ${mcCorrect}/23  ·  Vocab: ${vocabCorrect}/10  ·  Bonus: ${capsCorrect}/10`;
   document.getElementById('res-msg').textContent = msg;
   document.getElementById('results-panel').style.display = 'block';
   document.getElementById('submit-btn').disabled = true;
