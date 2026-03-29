@@ -1,42 +1,29 @@
 // api/teacher-geo.js
-// Mirrors the pattern of api/teacher.js but for the US Geography Assessment.
-// Sheet name: "Responses_GEO"  (single sheet, no team split for this test)
+const { getRows, updateCell, deleteRow, ensureSheetExists } = require("../lib/sheets");
+const nodemailer = require("nodemailer");
 
-import { getSheet, appendRow, updateRow, deleteRow } from '../lib/sheets.js';
-import nodemailer from 'nodemailer';
-
+const SHEET_NAME = "Responses_GEO";
 const TEACHER_PASSWORD = process.env.TEACHER_PASSWORD;
-const SHEET_NAME = 'Responses_GEO';
 
-// ── Answer key (server-side copy for email reports) ───────────────────────────
-const MC_ANSWERS = {
-  q1:'d', q2:'a', q3:'d', q4:'b', q5:'c', q6:'b', q7:'a', q8:'c',
-  q9:'d', q10:'c', q11:'d', q12:'a', q13:'a', q14:'d', q15:'b',
-  q16:'c', q17:'a', q18:'c', q19:'a', q20:'c', q21:'d', q22:'c', q23:'b'
+// Column positions (0-indexed) matching the header row written by submit-geo.js
+// name, team, date, timestamp, total, pct, letter, emailSent, q1..q23, m24..m33, c34..c43
+const COL = {
+  name: 0, team: 1, date: 2, timestamp: 3,
+  total: 4, pct: 5, letter: 6, emailSent: 7
 };
-const VOCAB_ANSWERS = {
-  m24:'j', m25:'d', m26:'f', m27:'g', m28:'c', m29:'a', m30:'h', m31:'e', m32:'i', m33:'b'
-};
-const CAP_ANSWERS = {
-  c34:'e', c35:'g', c36:'a', c37:'h', c38:'d', c39:'j', c40:'f', c41:'i', c42:'b', c43:'c'
-};
+// Answer columns start at index 8
+const MC_KEYS    = ["q1","q2","q3","q4","q5","q6","q7","q8","q9","q10",
+                    "q11","q12","q13","q14","q15","q16","q17","q18","q19","q20",
+                    "q21","q22","q23"];
+const VOCAB_KEYS = ["m24","m25","m26","m27","m28","m29","m30","m31","m32","m33"];
+const CAP_KEYS   = ["c34","c35","c36","c37","c38","c39","c40","c41","c42","c43"];
+const ALL_ANS_KEYS = [...MC_KEYS, ...VOCAB_KEYS, ...CAP_KEYS];
 
-function gradeSubmission(data) {
-  let mc = 0, vocab = 0, caps = 0;
-  for (const q in MC_ANSWERS) if ((data[q]||'').toLowerCase().trim() === MC_ANSWERS[q]) mc++;
-  for (const k in VOCAB_ANSWERS) if ((data[k]||'').toLowerCase().trim() === VOCAB_ANSWERS[k]) vocab++;
-  for (const k in CAP_ANSWERS) if ((data[k]||'').toLowerCase().trim() === CAP_ANSWERS[k]) caps++;
-  const total = mc + vocab + caps;
-  const pct = Math.round((total / 43) * 100);
-  const letter = pct>=90?'A':pct>=80?'B':pct>=70?'C':pct>=60?'D':'F';
-  return { mc, vocab, caps, total, pct, letter };
-}
-
-// ── Email helper ──────────────────────────────────────────────────────────────
+// ── Email ─────────────────────────────────────────────────────────────────────
 async function sendParentEmail(name, graded) {
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS }
+    service: "gmail",
+    auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS },
   });
 
   const html = `
@@ -67,7 +54,9 @@ async function sendParentEmail(name, graded) {
           </tr>
           <tr style="background:#eff6ff;font-weight:700;">
             <td style="padding:12px;border:1px solid #bfdbfe;">Total</td>
-            <td style="padding:12px;text-align:center;border:1px solid #bfdbfe;font-size:1.15rem;">${graded.total} / 43 &nbsp;·&nbsp; ${graded.pct}% &nbsp;·&nbsp; ${graded.letter}</td>
+            <td style="padding:12px;text-align:center;border:1px solid #bfdbfe;font-size:1.15rem;">
+              ${graded.total} / 43 &nbsp;·&nbsp; ${graded.pct}% &nbsp;·&nbsp; ${graded.letter}
+            </td>
           </tr>
         </table>
         <p>Please contact your child's teacher if you have any questions.</p>
@@ -77,48 +66,49 @@ async function sendParentEmail(name, graded) {
 
   await transporter.sendMail({
     from: `"Alice West" <${process.env.GMAIL_USER}>`,
-    replyTo: 'awest1@stratfordschools.com',
+    replyTo: "awest1@stratfordschools.com",
     to: process.env.PARENT_EMAIL_LIST || process.env.GMAIL_USER,
     subject: `Geography Assessment Results — ${name}`,
-    html
+    html,
   });
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+module.exports = async function handler(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { action, password, testId } = req.body;
-
+  const { action, password } = req.body;
   if (password !== TEACHER_PASSWORD) {
-    return res.status(401).json({ error: 'Incorrect password' });
+    return res.status(401).json({ error: "Incorrect password" });
   }
 
   try {
+
     // ── getData ───────────────────────────────────────────────────────────────
-    if (action === 'getData') {
-      const rows = await getSheet(SHEET_NAME);
+    if (action === "getData") {
+      await ensureSheetExists(SHEET_NAME);
+      const rows = await getRows(SHEET_NAME);
       if (!rows || rows.length <= 1) return res.json([]);
 
       const headers = rows[0];
-      const submissions = rows.slice(1).map((row, i) => {
-        const obj = {};
-        headers.forEach((h, idx) => { obj[h] = row[idx] || ''; });
 
-        // Reconstruct answer data from columns
+      const submissions = rows.slice(1).map((row, i) => {
+        // Map each answer key to its value using the header row
         const data = {};
-        Object.keys({ ...MC_ANSWERS, ...VOCAB_ANSWERS, ...CAP_ANSWERS }).forEach(k => {
-          data[k] = obj[k] || '';
+        ALL_ANS_KEYS.forEach(k => {
+          const idx = headers.indexOf(k);
+          data[k] = idx >= 0 ? (row[idx] || "") : "";
         });
 
         return {
-          name: obj.name || obj.Name || '',
-          timestamp: obj.timestamp || obj.Timestamp || '',
-          date: obj.date || obj.Date || '',
-          emailSent: obj.emailSent === 'TRUE' || obj.emailSent === true,
-          row: i + 2, // 1-indexed, skip header row
-          sheetName: SHEET_NAME,
-          data
+          name:       row[headers.indexOf("name")]      || "",
+          team:       row[headers.indexOf("team")]      || "",
+          timestamp:  row[headers.indexOf("timestamp")] || "",
+          date:       row[headers.indexOf("date")]      || "",
+          emailSent:  row[headers.indexOf("emailSent")] === "TRUE",
+          row:        i + 2,   // 1-indexed sheet row (row 1 = headers)
+          sheetName:  SHEET_NAME,
+          data,
         };
       }).filter(s => s.name);
 
@@ -126,25 +116,28 @@ export default async function handler(req, res) {
     }
 
     // ── sendEmail ─────────────────────────────────────────────────────────────
-    if (action === 'sendEmail') {
-      const { name, graded, rowIndex, sheetName } = req.body;
+    if (action === "sendEmail") {
+      const { name, graded, rowIndex } = req.body;
       await sendParentEmail(name, graded);
-      // Mark emailSent in sheet
-      try { await updateRow(sheetName || SHEET_NAME, rowIndex, { emailSent: 'TRUE' }); } catch(_) {}
+      // Mark emailSent = TRUE in the sheet
+      // emailSent is column index 8 (COL.emailSent + 1 for 1-based)
+      await updateCell(rowIndex, COL.emailSent + 1, "TRUE", SHEET_NAME);
       return res.json({ ok: true });
     }
 
     // ── deleteRow ─────────────────────────────────────────────────────────────
-    if (action === 'deleteRow') {
-      const { rowIndex, sheetName } = req.body;
-      await deleteRow(sheetName || SHEET_NAME, rowIndex);
+    if (action === "deleteRow") {
+      const { rowIndex } = req.body;
+      // deleteRow in sheets.js takes a 0-based startIndex
+      // rowIndex here is the 1-based sheet row, so subtract 1
+      await deleteRow(rowIndex - 1, SHEET_NAME);
       return res.json({ ok: true });
     }
 
-    return res.status(400).json({ error: 'Unknown action' });
+    return res.status(400).json({ error: "Unknown action" });
 
   } catch (e) {
-    console.error('[teacher-geo]', e);
+    console.error("[teacher-geo]", e);
     return res.status(500).json({ error: e.message });
   }
-}
+};
