@@ -803,7 +803,7 @@ const capAnswers = {
   c34:'e', c35:'g', c36:'a', c37:'h', c38:'d', c39:'j', c40:'f', c41:'i', c42:'b', c43:'c'
 };
 
-const TOTAL = 23 + 10 + 10; // MC + vocab + capitals
+const TOTAL = 23 + 10; // 33 required questions (MC + vocab). Bonus capitals are optional.
 
 function updateProgress() {
   let answered = 0;
@@ -811,14 +811,17 @@ function updateProgress() {
   for (let q in mcAnswers) {
     if (document.querySelector(`input[name="${q}"]:checked`)) answered++;
   }
-  // count matching
+  // count vocab matching only (bonus capitals don't count toward required progress)
   for (let id in matchAnswers) {
     if (document.getElementById(id).value.trim()) answered++;
   }
+  // count bonus separately for display
+  let bonusAnswered = 0;
   for (let id in capAnswers) {
-    if (document.getElementById(id).value.trim()) answered++;
+    if (document.getElementById(id).value.trim()) bonusAnswered++;
   }
-  document.getElementById('answered-count').textContent = `${answered} / ${TOTAL}`;
+  document.getElementById('answered-count').textContent =
+    `${answered} / ${TOTAL}` + (bonusAnswered > 0 ? `  +${bonusAnswered} bonus` : '');
   document.getElementById('progress-fill').style.width = `${(answered/TOTAL)*100}%`;
 }
 
@@ -866,16 +869,17 @@ async function submitTest() {
   }
 
   // Compute score for payload
-  // Section A: 1pt each (23pts), Section B: 1pt each (10pts), Section C bonus: 0.5pt each (5pts max)
+  // Section A: 1pt each = 23pts max
+  // Section B: 1pt each = 10pts max  → base total = 33pts
+  // Section C: 0.5pt each = 5pts max BONUS (no penalty for wrong/blank)
   let mcCorrect = 0, vocabCorrect = 0, capsCorrect = 0;
   for (let q in mcAnswers) { if (payload[q] === mcAnswers[q]) mcCorrect++; }
   for (let id in matchAnswers) { if (payload[id].toLowerCase() === matchAnswers[id]) vocabCorrect++; }
   for (let id in capAnswers) { if (payload[id].toLowerCase() === capAnswers[id]) capsCorrect++; }
-  const mcScore    = mcCorrect;           // /23
-  const vocabScore = vocabCorrect;        // /10
-  const capsScore  = capsCorrect * 0.5;  // /5 bonus
-  const totalScore = mcScore + vocabScore + capsScore; // /38 base + up to 5 bonus
-  const pct = Math.round((totalScore / 33) * 100); // out of 33 base points
+  const baseScore  = mcCorrect + vocabCorrect;   // out of 33
+  const capsScore  = capsCorrect * 0.5;           // bonus, out of 5
+  const totalScore = baseScore + capsScore;        // out of 38 max
+  const pct = Math.min(100, Math.round((baseScore / 33) * 100)); // grade based on 33 only
   const grade = pct>=90?'A':pct>=80?'B':pct>=70?'C':pct>=60?'D':'F';
   payload.total = totalScore;
   payload.pct = pct;
@@ -948,7 +952,7 @@ async function submitTest() {
     const inp = document.getElementById(id);
     const val = inp.value.trim().toLowerCase();
     if (val === capAnswers[id]) inp.classList.add('match-correct');
-    else inp.classList.add('match-wrong');
+    // No wrong marking for bonus — no penalty for incorrect answers
   }
 
   let msg = '';
@@ -956,11 +960,13 @@ async function submitTest() {
   else if (pct >= 75) msg = 'Good effort. Review a few more landmarks.';
   else if (pct >= 60) msg = "Keep studying — you're getting there!";
   else msg = "Time for more review. You've got this!";
-  if (capsCorrect >= 8) msg += ' Great job on the bonus!';
+  if (capsScore > 0) msg += ` You earned ${capsScore.toFixed(1)} bonus point${capsScore !== 1 ? 's' : ''}!`;
 
   document.getElementById('res-grade').textContent = grade;
-  document.getElementById('res-pct').textContent = `${totalScore.toFixed(1)} / 33 pts  (+${capsScore.toFixed(1)} bonus)`;
-  document.getElementById('res-detail').textContent = `${pct}%  ·  MC: ${mcCorrect}/23  ·  Vocab: ${vocabCorrect}/10  ·  Bonus: ${capsCorrect}/10`;
+  document.getElementById('res-pct').textContent =
+    `${baseScore} / 33 pts` + (capsScore > 0 ? `  +${capsScore.toFixed(1)} bonus` : '');
+  document.getElementById('res-detail').textContent =
+    `${pct}%  ·  Section A: ${mcCorrect}/23  ·  Section B: ${vocabCorrect}/10  ·  Bonus: ${capsCorrect}/10 (${capsScore.toFixed(1)} pts)`;
   document.getElementById('res-msg').textContent = msg;
   document.getElementById('results-panel').style.display = 'block';
   document.getElementById('submit-btn').disabled = true;
