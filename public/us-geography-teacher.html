@@ -293,7 +293,7 @@ function renderDashboard() {
       <th style="padding:10px 12px;text-align:left;border:1px solid #e2e8f0;">Student</th>
 
       <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Base<br><small style="font-weight:400;color:#6b7280;">/33</small></th><th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Bonus<br><small style="font-weight:400;color:#6b7280;">/5</small></th>
-      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Total<br><small style="font-weight:400;color:#6b7280;">/38</small></th>
+      <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Total<br><small style="font-weight:400;color:#6b7280;">/33</small></th>
       <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">%</th>
       <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Grade</th>
       <th style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">Date</th>
@@ -309,7 +309,7 @@ function renderDashboard() {
       <td style="padding:10px 12px;border:1px solid #e2e8f0;font-weight:600;">${s.name || '—'}</td>
 
       <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;font-weight:700;">${g.base}</td>
-      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;color:#16a34a;font-weight:700;">${g.bonus > 0 ? '+' + g.bonus.toFixed(1) : '—'}</td>
+      <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;color:#16a34a;font-weight:700;">${g.bonus > 0 ? g.bonus.toFixed(1) : '—'}</td>
       <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;font-weight:800;">${g.total.toFixed(1)}</td>
       <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">${g.pct}%</td>
       <td style="padding:10px 12px;text-align:center;border:1px solid #e2e8f0;">
@@ -347,7 +347,7 @@ function openDetail(i) {
 
   let html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
     <span style="font-size:1.4rem;">📋</span>
-    <h3 style="font-size:1.15rem;">${s.name} — ${g.base}/33 + ${g.bonus.toFixed(1)} bonus (${g.pct}% · ${g.letter})</h3>
+    <h3 style="font-size:1.15rem;">${s.name} — ${g.base}/33  (bonus: ${g.bonus.toFixed(1)})  ·  ${g.pct}%</h3>
   </div>`;
 
   // Section A MC
@@ -473,7 +473,7 @@ async function confirmDel(i) {
 // ─── Export CSV ───────────────────────────────────────────────────────────────
 function exportCSV() {
   if (!submissions.length) { alert('No submissions to export.'); return; }
-  const headers = ['Name','Date','Base (/33)','Bonus (/5)','Total (/38)','Percent','Grade',
+  const headers = ['Name','Date','Base (/33)','Bonus (/5)','Total (/33)','Percent','Grade',
     ...Object.keys(MC_ANSWERS).map(q=>q.toUpperCase()),
     ...Object.keys(VOCAB_ANSWERS).map(k=>'V'+k.slice(1)),
     ...Object.keys(CAP_ANSWERS).map(k=>'C'+k.slice(1))
