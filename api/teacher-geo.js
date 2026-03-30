@@ -35,7 +35,7 @@ function gradeSubmission(data) {
   for (const k in CAP_ANSWERS)   if ((data[k]||"").toLowerCase().trim() === CAP_ANSWERS[k])   caps++;
   const base = mc + vocab;
   const bonus = caps * 0.5;
-  const total = base + bonus;
+  const total = Math.min(33, base + bonus);
   const pct   = Math.min(100, Math.round((base / 33) * 100));
   const letter = pct>=90?"A":pct>=80?"B":pct>=70?"C":pct>=60?"D":"F";
   return { mc, vocab, caps, base, bonus, total, pct, letter };
@@ -65,12 +65,10 @@ ${name} has completed the Geography of the United States unit assessment.
 ${divider}
 RESULTS
 ${divider}
-Section A — Multiple Choice  : ${graded.mc} / 23
-Section B — Vocabulary       : ${graded.vocab} / 10
-Section C — State Capitals   : ${graded.caps} / 10
-
-Base Score                   : ${graded.base} / 33  (${graded.pct}%  ·  ${graded.letter})
+Base Score (Sections A & B)  : ${graded.base} / 33  (${graded.pct}%)
 Bonus (State Capitals)       : +${graded.bonus.toFixed(1)} / 5
+                               --------
+Total                        : ${graded.total.toFixed(1)} / 33
 ${divider}
 
 Please let me know if you have any questions.
