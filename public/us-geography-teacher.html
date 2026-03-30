@@ -217,7 +217,7 @@ function gradeSubmission(data) {
 
   const base = mc + vocab;           // /33
   const bonus = caps * 0.5;           // /5 bonus
-  const total = base + bonus;
+  const total = Math.min(33, base + bonus);
   const pct = Math.min(100, Math.round((base / 33) * 100));
   const letter = pct>=90?'A':pct>=80?'B':pct>=70?'C':pct>=60?'D':'F';
   return { mc, vocab, caps, base, bonus, total, pct, letter, detail };
