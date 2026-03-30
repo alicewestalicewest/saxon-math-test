@@ -66,7 +66,7 @@ ${divider}
 RESULTS
 ${divider}
 Base Score (Sections A & B)  : ${graded.base} / 33  (${graded.pct}%)
-Bonus (State Capitals)       : +${graded.bonus.toFixed(1)} / 5
+Bonus (State Capitals)       : +${graded.bonus.toFixed(1)}
                                --------
 Total                        : ${graded.total.toFixed(1)} / 33
 ${divider}
