@@ -878,7 +878,7 @@ async function submitTest() {
   for (let id in capAnswers) { if (payload[id].toLowerCase() === capAnswers[id]) capsCorrect++; }
   const baseScore  = mcCorrect + vocabCorrect;   // out of 33
   const capsScore  = capsCorrect * 0.5;           // bonus, out of 5
-  const totalScore = baseScore + capsScore;        // out of 38 max
+  const totalScore = Math.min(33, baseScore + capsScore);        // capped at 33
   const pct = Math.min(100, Math.round((baseScore / 33) * 100)); // grade based on 33 only
   const grade = pct>=90?'A':pct>=80?'B':pct>=70?'C':pct>=60?'D':'F';
   payload.total = totalScore;
